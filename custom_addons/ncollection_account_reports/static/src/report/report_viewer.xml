@@ -113,7 +113,8 @@
                     <t t-foreach="extraFilters" t-as="xf" t-key="xf.name">
                         <div t-if="xf.type === 'selection'" class="o_nc_rep__f">
                             <label t-att-for="'f_' + xf.name" t-esc="xf.label"/>
-                            <select t-att-id="'f_' + xf.name" t-model="state.values[xf.name]">
+                            <select t-att-id="'f_' + xf.name" t-model="state.values[xf.name]"
+                                    t-on-change="() => xf.name === 'partner_scope' and this.onScopeChange()">
                                 <t t-foreach="xf.options" t-as="opt" t-key="opt[0]">
                                     <option t-att-value="opt[0]" t-esc="opt[1]"/>
                                 </t>

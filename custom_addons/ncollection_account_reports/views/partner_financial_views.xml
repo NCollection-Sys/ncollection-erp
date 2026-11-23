@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Requests 02 / 03: Accounting > Customers / Suppliers lists with the partner's financial position, and the
+         Summary (the Customer / Supplier Statement preselected for the partner) on each row and on the form.
+         Dedicated list views bound to the two Accounting actions only: the Contacts app keeps its own list. -->
+    <record id="view_partner_list_nc_customers" model="ir.ui.view">
+        <field name="name">res.partner.list.nc.customers</field>
+        <field name="model">res.partner</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Customers" class="o_nc_fin_partners" sample="1" multi_edit="0">
+                <field name="complete_name" string="Customer" class="fw-semibold"/>
+                <field name="email" optional="show" widget="email" class="text-muted"/>
+                <field name="phone" optional="show" class="o_force_ltr text-muted"/>
+                <field name="city" optional="hide"/>
+                <field name="country_id" optional="hide"/>
+                <field name="vat" optional="hide"/>
+                <field name="user_id" string="Salesperson" optional="hide" widget="many2one_avatar_user"/>
+                <field name="nc_fin_currency_id" column_invisible="1"/>
+                <field name="nc_open_invoice_count" string="Open Invoices" optional="show"
+                       groups="account.group_account_readonly"/>
+                <field name="nc_receivable_balance" string="Balance" sum="Total" optional="show"
+                       groups="account.group_account_readonly" class="o_nc_fin_amount"
+                       decoration-info="nc_receivable_balance &gt; 0" decoration-danger="nc_receivable_balance &lt; 0"/>
+                <field name="nc_customer_status" string="Status" widget="badge" optional="show"
+                       groups="account.group_account_readonly"
+                       decoration-success="nc_customer_status == 'settled'"
+                       decoration-warning="nc_customer_status == 'partial'"
+                       decoration-danger="nc_customer_status == 'outstanding'"
+                       decoration-info="nc_customer_status == 'credit'"
+                       decoration-muted="nc_customer_status == 'none'"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <button name="action_nc_partner_summary" type="object" string="Summary" icon="fa-file-text-o"
+                        class="btn-link" context="{'nc_partner_scope': 'receivable'}"
+                        groups="account.group_account_readonly"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_partner_list_nc_suppliers" model="ir.ui.view">
+        <field name="name">res.partner.list.nc.suppliers</field>
+        <field name="model">res.partner</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Suppliers" class="o_nc_fin_partners" sample="1" multi_edit="0">
+                <field name="complete_name" string="Supplier" class="fw-semibold"/>
+                <field name="email" optional="show" widget="email" class="text-muted"/>
+                <field name="phone" optional="show" class="o_force_ltr text-muted"/>
+                <field name="city" optional="hide"/>
+                <field name="country_id" optional="hide"/>
+                <field name="vat" optional="hide"/>
+                <field name="nc_fin_currency_id" column_invisible="1"/>
+                <field name="nc_open_bill_count" string="Open Bills" optional="show"
+                       groups="account.group_account_readonly"/>
+                <field name="nc_payable_balance" string="Balance" sum="Total" optional="show"
+                       groups="account.group_account_readonly" class="o_nc_fin_amount"
+                       decoration-info="nc_payable_balance &gt; 0" decoration-danger="nc_payable_balance &lt; 0"/>
+                <field name="nc_supplier_status" string="Status" widget="badge" optional="show"
+                       groups="account.group_account_readonly"
+                       decoration-success="nc_supplier_status == 'settled'"
+                       decoration-warning="nc_supplier_status == 'partial'"
+                       decoration-danger="nc_supplier_status == 'outstanding'"
+                       decoration-info="nc_supplier_status == 'credit'"
+                       decoration-muted="nc_supplier_status == 'none'"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <button name="action_nc_partner_summary" type="object" string="Summary" icon="fa-file-text-o"
+                        class="btn-link" context="{'nc_partner_scope': 'payable'}"
+                        groups="account.group_account_readonly"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_customers_view_list_nc" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_partner_list_nc_customers"/>
+        <field name="act_window_id" ref="account.res_partner_action_customer"/>
+    </record>
+    <record id="action_suppliers_view_list_nc" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_partner_list_nc_suppliers"/>
+        <field name="act_window_id" ref="account.res_partner_action_supplier"/>
+    </record>
+
+    <!-- Request 03: Summary next to Invoiced on the contact form. -->
+    <record id="view_partner_form_nc_summary" model="ir.ui.view">
+        <field name="name">res.partner.form.nc.summary</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account.partner_view_buttons"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_view_partner_invoices']" position="after">
+                <button type="object" class="oe_stat_button o_nc_summary_button" icon="fa-file-text-o"
+                        name="action_nc_partner_summary" groups="account.group_account_readonly"
+                        invisible="not id">
+                    <div class="o_form_field o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="nc_fin_currency_id" invisible="1"/>
+                            <field name="nc_receivable_balance" widget="monetary"
+                                   options="{'currency_field': 'nc_fin_currency_id'}"/>
+                        </span>
+                        <span class="o_stat_text">Summary</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

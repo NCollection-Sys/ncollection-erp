@@ -33,3 +33,4 @@ from . import test_xbrl_gl
 from . import test_report_suggest
 from . import test_account_balances_ledger
 from . import test_xbrl_entity_identity
+from . import test_partner_financials

@@ -47,6 +47,7 @@
         'views/account_report_views.xml',
         'views/equity_component_views.xml',
         'views/report_menus.xml',
+        'views/partner_financial_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

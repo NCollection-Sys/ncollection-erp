@@ -8,3 +8,4 @@ from . import premium_dashboards
 from . import premium_export
 from . import xbrl_export
 from . import equity_component
+from . import res_partner_financial

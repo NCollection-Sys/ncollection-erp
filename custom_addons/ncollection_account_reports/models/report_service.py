@@ -765,7 +765,8 @@ class NcReportService(models.AbstractModel):
         return shared + extras
 
     @api.model
-    def nc_report_suggest(self, model, field_name, term='', company_id=None, exclude_ids=None, offset=0, limit=20):
+    def nc_report_suggest(self, model, field_name, term='', company_id=None, exclude_ids=None, offset=0, limit=20,
+                          scope=None):
         """Suggestions for a report's many2many filter (Journals, Accounts, Partners, and the extra many2many
         filters a report defines), INCLUDING an empty term: the picker lists what can be chosen as soon as it is
         focused. Runs as the user (ACL + record rules decide, no sudo), restricted to the report's company where the
@@ -788,6 +789,8 @@ class NcReportService(models.AbstractModel):
             domain.extend(['|', ('company_id', '=', False), ('company_id', '=', company)])
         if exclude_ids:
             domain.append(('id', 'not in', [int(i) for i in exclude_ids]))
+        if Comodel._name == 'res.partner' and 'partner_scope' in Model._fields:
+            domain += self._nc_partner_scope_domain(scope or Model._fields['partner_scope'].default(Model))
         limit = max(1, min(int(limit or 20), 80))
         offset = max(0, int(offset or 0))
         term = (term or '').strip()
@@ -805,6 +808,15 @@ class NcReportService(models.AbstractModel):
         return {'records': [{'id': rid, 'name': name} for rid, name in rows], 'more': more}
 
     @api.model
+    def _nc_partner_scope_domain(self, scope):
+        """Partners eligible for a statement / partner-ledger Scope: Odoo's own customer / supplier ranks, on the
+        partner or its commercial entity (a partner that is both qualifies for both)."""
+        rank = {'receivable': 'customer_rank', 'payable': 'supplier_rank'}.get(scope)
+        if not rank:
+            return []
+        return ['|', (rank, '>', 0), ('commercial_partner_id.%s' % rank, '>', 0)]
+
+    @api.model
     def _nc_clean_filters(self, Model, filters):
         vals = {}
         for name in self._nc_filter_names(Model):
@@ -817,8 +829,12 @@ class NcReportService(models.AbstractModel):
                 # company's journal / account / partner is dropped, never echoed back with its name.
                 ids = [int(i) for i in (value or [])]
                 if ids:
-                    ids = self.env[field.comodel_name].with_context(active_test=False).search(
-                        [('id', 'in', ids)]).ids
+                    domain = [('id', 'in', ids)]
+                    if field.comodel_name == 'res.partner' and 'partner_scope' in Model._fields:
+                        # a partner picked for the OTHER scope never silently narrows this run
+                        domain += self._nc_partner_scope_domain(
+                            filters.get('partner_scope') or Model._fields['partner_scope'].default(Model))
+                    ids = self.env[field.comodel_name].with_context(active_test=False).search(domain).ids
                 vals[name] = [(6, 0, ids)]
             elif field.type == 'many2one':
                 vals[name] = int(value) if value else False

@@ -197,6 +197,16 @@ export class NcReportViewer extends Component {
         await this.run(this.filtersFromValues(this.state.values));
     }
 
+    /** Request 04: switching Scope clears the partners picked for the other scope, so no hidden stale filter ever
+     *  narrows the new run. The server enforces the same rule (nc_report_run drops ineligible partners). */
+    onScopeChange() {
+        if (this.state.values.partner_ids && this.state.values.partner_ids.length) {
+            this.state.values.partner_ids = [];
+            this.notification.add(_t("Partners cleared: pick them again for this scope."), { type: "info" });
+        }
+        this.closePicker();
+    }
+
     async reset() {
         await this.run({});
     }
@@ -594,6 +604,8 @@ export class NcReportViewer extends Component {
         ], {
             company_id: this.state.values.company_id || false,
             exclude_ids: taken,
+            // a statement / partner ledger offers only partners of the chosen Scope (customers / suppliers)
+            scope: this.state.values.partner_scope || false,
             offset: append ? picker.options.length : 0,
             limit: 20,
         });
