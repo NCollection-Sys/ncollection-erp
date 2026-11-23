@@ -2,7 +2,7 @@
 # (C8101 wants the OCA as author; this is a proprietary NCollection module.)
 {
     'name': 'NCollection Bank & Cash Journal Operations',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Accounting/Accounting',
     'summary': 'Bank and cash journal cards as an operations centre: ledger Current Balance, Pending Balance, '
                'complete Transactions, Payment / Receipt (Customer, Supplier or Account), Internal Transfer, '

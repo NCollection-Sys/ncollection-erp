@@ -6,8 +6,9 @@
         <field name="arch" type="xml">
             <list create="0" edit="0" delete="0" action="action_open_source" type="object"
                   class="o_nc_transactions" decoration-success="direction == 'in'"
-                  decoration-danger="direction == 'out'" decoration-muted="status == 'in_process' or operation == 'settlement'">
+                  decoration-danger="direction == 'out'" decoration-muted="status == 'in_process'">
                 <field name="date"/>
+                <field name="bank_date" optional="hide"/>
                 <field name="reference"/>
                 <field name="operation" widget="badge"/>
                 <field name="direction" column_invisible="1"/>
@@ -20,7 +21,8 @@
                 <field name="amount_in" sum="Incoming"/>
                 <field name="amount_out" sum="Outgoing"/>
                 <field name="pending_balance" sum="Pending" optional="show"/>
-                <field name="running_balance" optional="show"/>
+                <field name="balance_currency_id" column_invisible="1"/>
+                <field name="running_balance" optional="show" class="o_nc_running"/>
                 <field name="status" widget="badge" decoration-info="status in ('in_process', 'to_reconcile')"
                        decoration-warning="status == 'awaiting_bank'" decoration-success="status in ('paid', 'reconciled')"/>
                 <field name="journal_id" optional="hide"/>

@@ -425,7 +425,7 @@ class TestTransactions(JournalOpsCommon):
     def _rows(self, journal):
         self.env.flush_all()
         return self.env['ncollection.journal.transaction'].search(
-            [('journal_id', '=', journal.id)], order='date, id')
+            [('journal_id', '=', journal.id)], order='value_date, id')
 
     def _ledger(self, journal, cutoff=None):
         domain = [('account_id', '=', journal.default_account_id.id), ('parent_state', '=', 'posted')]
@@ -433,10 +433,10 @@ class TestTransactions(JournalOpsCommon):
             domain.append(('date', '<=', cutoff))
         return sum(self.env['account.move.line'].search(domain).mapped('balance'))
 
-    def _assert_running_equals_ledger(self, journal):
+    def _assert_running_equals_ledger(self, journal, skip=()):
         rows = self._rows(journal)
-        for cutoff in sorted(set(rows.mapped('date'))):
-            upto = rows.filtered(lambda r: r.date <= cutoff).sorted(lambda r: (r.date, r.id))
+        for cutoff in sorted(set(rows.mapped('value_date')) - set(skip)):
+            upto = rows.filtered(lambda r: r.value_date <= cutoff).sorted(lambda r: (r.value_date, r.id))
             self.assertAlmostEqual(upto[-1].running_balance, self._ledger(journal, cutoff),
                                    msg=f"running balance at {cutoff}")
         self.assertAlmostEqual(sum(rows.mapped('liquidity_balance')), self._ledger(journal))
@@ -461,18 +461,18 @@ class TestTransactions(JournalOpsCommon):
         fee._nc_mark_as_paid()
         rows = self._assert_running_equals_ledger(self.bank)
         self.assertEqual(len(rows.filtered(lambda r: r.payment_id == receipt and r.operation == 'receipt')), 1)
-        confirmation = rows.filtered(lambda r: r.statement_line_id.nc_settlement_payment_id == receipt)
-        self.assertEqual(confirmation.operation, 'settlement')
-        self.assertEqual(confirmation.payment_id, receipt)
-        self.assertFalse(confirmation.amount_in or confirmation.amount_out, "never a second incoming amount")
+        self.assertFalse(rows.filtered(lambda r: r.operation == 'settlement'), "a Bank Confirmation is never a row")
+        row = rows.filtered(lambda r: r.payment_id == receipt)
+        self.assertEqual(len(row), 1)
+        self.assertEqual(row.statement_line_id.nc_settlement_payment_id, receipt)
+        self.assertAlmostEqual(row.liquidity_balance, 100.0, msg="the Paid receipt moves the balance on its own row")
         self.assertAlmostEqual(sum(rows.mapped('amount_in')), 400.0)
         self.assertEqual(len(rows.filtered(lambda r: r.operation == 'bank')), 1)
         row = rows.filtered(lambda r: r.payment_id == pending and r.operation == 'payment')
         self.assertEqual(row.status, 'in_process')
         self.assertAlmostEqual(row.pending_balance, -30.0)
         self.assertAlmostEqual(row.liquidity_balance, 0.0)
-        self.assertEqual(rows.filtered(lambda r: r.payment_id == fee and r.operation != 'settlement')
-                         .operation, 'account')
+        self.assertEqual(rows.filtered(lambda r: r.payment_id == fee).operation, 'account')
         self.assertAlmostEqual(self._figures(self.bank)['balance'], 395.0)
 
     def test_partial_and_different_amounts_follow_the_posted_lines_at_every_cutoff(self):
@@ -489,15 +489,20 @@ class TestTransactions(JournalOpsCommon):
             'line_ids': [(0, 0, {'account_id': self.bank.default_account_id.id, 'debit': 7.0, 'name': 'adj'}),
                          (0, 0, {'account_id': self.other_income.id, 'credit': 7.0, 'name': 'adj'})]}).action_post()
         receipt._nc_mark_as_paid(day(-1))                               # the remaining 5, on its own date
-        rows = self._assert_running_equals_ledger(self.bank)
+        # the documented exception: between the two confirmations of the receipt (day -10 and day -1) the row has
+        # not yet counted the 95 the ledger already holds
+        rows = self._assert_running_equals_ledger(self.bank, skip=(day(-5), day(-3)))
         self.assertAlmostEqual(self._ledger(self.bank), 1000 + 95 - 40 + 7 + 5)
-        self.assertAlmostEqual(rows.filtered(lambda r: r.operation == 'receipt').liquidity_balance, 0.0,
-                               "nothing is counted at the nominal amount on the payment's date")
-        settlements = rows.filtered(lambda r: r.operation == 'settlement')
-        self.assertEqual(sorted(settlements.mapped('liquidity_balance')), [-40.0, 5.0, 95.0])
+        receipt_row = rows.filtered(lambda r: r.operation == 'receipt')
+        self.assertAlmostEqual(receipt_row.liquidity_balance, 100.0, msg="what the bank booked, not the nominal")
+        self.assertEqual(receipt_row.value_date, day(-1), "two confirmations: counted on the last bank day")
+        payment_row = rows.filtered(lambda r: r.operation == 'payment')
+        self.assertEqual((payment_row.date, payment_row.bank_date), (day(-9), day(-3)))
+        self.assertAlmostEqual(payment_row.liquidity_balance, -40.0)
+        self.assertFalse(rows.filtered(lambda r: r.operation == 'settlement'))
         self.assertAlmostEqual(self._figures(self.bank)['balance'], self._ledger(self.bank))
-        before_settlement = rows.filtered(lambda r: r.date <= day(-11)).sorted(lambda r: (r.date, r.id))[-1]
-        self.assertAlmostEqual(before_settlement.running_balance, 1000.0, msg="the receipt was not yet in the bank")
+        before = rows.filtered(lambda r: r.value_date <= day(-11)).sorted(lambda r: (r.value_date, r.id))[-1]
+        self.assertAlmostEqual(before.running_balance, 1000.0, msg="the receipt was not yet in the bank")
 
     def test_direct_method_counts_on_the_payment_row(self):
         method = self.bank2.inbound_payment_method_line_ids[:1]
@@ -619,7 +624,7 @@ class TestPayeeAndRows(JournalOpsCommon):
         opened = {r.operation: r.action_open_source() for r in rows}
         self.assertEqual((opened['receipt']['res_model'], opened['receipt']['res_id']),
                          ('account.payment', receipt.id))
-        self.assertEqual(opened['settlement']['res_model'], 'account.bank.statement.line')
+        self.assertNotIn('settlement', opened, 'a Bank Confirmation is folded into its receipt')
         self.assertEqual(opened['bank']['res_model'], 'account.bank.statement.line')
         self.assertEqual((opened['transfer']['res_model'], opened['transfer']['res_id']),
                          ('ncollection.internal.transfer', transfer.id))
