@@ -63,6 +63,12 @@ class MovePrintSetting(models.Model):
     show_unit_price = fields.Selection(TRI, string='Unit price column', default='default', required=True)
     show_discount = fields.Selection(TRI, string='Discount column', default='default', required=True)
     show_taxes = fields.Selection(TRI, string='Taxes column', default='default', required=True)
+    show_bank_details = fields.Selection(
+        TRI, string='Bank details', default='default', required=True,
+        help="The receiving bank account and the payment QR code printed with the payment communication.")
+    show_payment_terms = fields.Selection(TRI, string='Payment terms', default='default', required=True)
+    show_notes = fields.Selection(TRI, string='Notes', default='default', required=True,
+                                  help="The invoice's Terms and Conditions / notes.")
     stamp_mode = fields.Selection(related='move_id.nc_stamp_mode', readonly=False, string='Document Stamp')
     stamp_editable = fields.Boolean(related='move_id.nc_stamp_mode_editable')
     stamp_default_on = fields.Boolean(related='move_id.nc_stamp_default_on')

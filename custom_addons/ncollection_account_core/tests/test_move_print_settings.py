@@ -66,6 +66,43 @@ class TestMovePrintSettings(AccountTestInvoicingCommon):
         self.assertEqual(self.inv_a.payment_state, state, 'presentation only')
         self.assertAlmostEqual(self.inv_a.amount_residual, 60.0)
 
+    def test_bank_terms_notes_are_per_document_switches(self):
+        bank = self.env['res.partner.bank'].create({'acc_number': 'AE070331234567890123456',
+                                                    'partner_id': self.env.company.partner_id.id, 'allow_out_payment': True})
+        term = self.env['account.payment.term'].create({'name': 'NC 45 days', 'note': '<p>NCTERMS pay in 45</p>'})
+        moves = self._nc_invoice(300.0) | self._nc_invoice(400.0)
+        for move in moves:
+            move.button_draft()
+            move.write({'partner_bank_id': bank.id, 'invoice_payment_term_id': term.id,
+                        'narration': '<p>NCNOTE thank you</p>', 'payment_reference': 'NCREF'})
+            move.action_post()
+        first, second = moves
+        company_before = (self.env.company.invoice_terms, self.env.company.terms_type)
+        html = self._html(first)
+        for marker in ('AE070331234567890123456', 'NCTERMS', 'NCNOTE'):
+            self.assertIn(marker, html, 'default prints Odoo\'s own section %s' % marker)
+        setting = self._setting(first, show_bank_details='hide')
+        html = self._html(first)
+        self.assertNotIn('AE070331234567890123456', html)
+        self.assertIn('NCTERMS', html)
+        self.assertIn('NCNOTE', html)
+        setting.write({'show_bank_details': 'default', 'show_payment_terms': 'hide'})
+        html = self._html(first)
+        self.assertIn('AE070331234567890123456', html)
+        self.assertNotIn('NCTERMS', html)
+        self.assertIn('NCNOTE', html)
+        setting.write({'show_payment_terms': 'show', 'show_notes': 'hide'})
+        html = self._html(first)
+        self.assertIn('NCTERMS', html)
+        self.assertNotIn('NCNOTE', html)
+        setting.write({'show_bank_details': 'hide', 'show_payment_terms': 'hide', 'show_notes': 'hide'})
+        other = self._html(second)                      # the other invoice is untouched
+        for marker in ('AE070331234567890123456', 'NCTERMS', 'NCNOTE'):
+            self.assertIn(marker, other)
+        self.assertEqual((self.env.company.invoice_terms, self.env.company.terms_type), company_before)
+        self.assertEqual((first.narration, first.partner_bank_id, first.invoice_payment_term_id),
+                         (second.narration, bank, term), 'presentation only: the document data is unchanged')
+
     def test_reset_returns_to_the_defaults(self):
         setting = self._setting(self.inv_a, title='X')
         setting.action_reset()

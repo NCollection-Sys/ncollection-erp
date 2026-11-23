@@ -51,6 +51,9 @@
                             <group string="Sections">
                                 <field name="show_customer_address" widget="radio" options="{'horizontal': true}"/>
                                 <field name="show_payment_reference" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_bank_details" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_payment_terms" widget="radio" options="{'horizontal': true}"/>
+                                <field name="show_notes" widget="radio" options="{'horizontal': true}"/>
                                 <label for="stamp_mode"/>
                                 <div class="o_row">
                                     <field name="stamp_mode" widget="selection_badge" readonly="not stamp_editable"/>
@@ -113,6 +116,30 @@
     <template id="report_invoice_document_nc_payment_history" inherit_id="account.report_invoice_document">
         <xpath expr="//t[@t-call='web.external_layout']" position="before">
             <t t-set="print_with_payments" t-value="o._nc_print_with_payments(print_with_payments)"/>
+            <t t-set="nc_sections" t-value="o._nc_print_sections()"/>
+        </xpath>
+        <!-- Bank details / payment terms / notes: this document's own switches (Print Settings > Sections). -->
+        <!-- The bank node keeps its own condition untouched: Odoo's account.report_invoice_document_preview locates
+             it by that exact t-if. Instead, ``o`` is shadowed by an empty record just around it when hidden (so
+             o.partner_bank_id is empty), and restored right after. -->
+        <xpath expr="//p[@name='payment_communication']/t[@t-if='o.partner_bank_id']" position="before">
+            <t t-set="nc_doc" t-value="o"/>
+            <t t-if="not nc_sections['show_bank_details']" t-set="o" t-value="o.browse()"/>
+        </xpath>
+        <xpath expr="//p[@name='payment_communication']/t[@t-if='o.partner_bank_id']" position="after">
+            <t t-set="o" t-value="nc_doc"/>
+        </xpath>
+        <xpath expr="//t[@t-set='show_qr']" position="attributes">
+            <attribute name="t-value">o.display_qr_code and o.amount_residual and nc_sections['show_bank_details']</attribute>
+        </xpath>
+        <xpath expr="//span[@id='payment_terms_note_id']" position="attributes">
+            <attribute name="t-if">o.invoice_payment_term_id.note and nc_sections['show_payment_terms']</attribute>
+        </xpath>
+        <xpath expr="//div[@id='total_payment_term_details_table']" position="attributes">
+            <attribute name="t-if">o.show_payment_term_details and nc_sections['show_payment_terms']</attribute>
+        </xpath>
+        <xpath expr="//div[@name='comment']" position="attributes">
+            <attribute name="t-if">not is_html_empty(o.narration) and nc_sections['show_notes']</attribute>
         </xpath>
     </template>
 </odoo>

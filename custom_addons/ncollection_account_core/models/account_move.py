@@ -126,6 +126,15 @@ class AccountMove(models.Model):
             return setting.show_payment_history == 'show'
         return default
 
+    def _nc_print_sections(self):
+        """Bank details / payment terms / notes on the printed document: THIS document's Print Settings only.
+        'Default' and 'Show' print what Odoo's report prints (a section with no content stays absent); 'Hide' leaves
+        it out. Never reads or writes the company, the template or another document."""
+        self.ensure_one()
+        setting = self._nc_print_setting() if self.id else None
+        return {name: not (setting and setting[name] == 'hide')
+                for name in ('show_bank_details', 'show_payment_terms', 'show_notes')}
+
     def action_nc_print_settings(self):
         """Print Settings of THIS document: a dialog over its own row (created on first save)."""
         self.ensure_one()
