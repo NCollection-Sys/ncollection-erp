@@ -10,9 +10,9 @@ Every posted line on the journal's account belongs to exactly one row, and ``liq
 POSTED LINES (company currency), never a nominal payment amount: a bank line matched for a different amount, a
 partial match or a write-off counts exactly what was booked, on its own date. ``running_balance`` is the window sum in
 (value_date, id) order of the balance effect in the journal's balance currency; ``value_date`` is the bank date
-(the day the money moved on the account) or, while nothing moved, the document date. So the last row equals the card's Current
-Balance and the row at any value date equals the ledger balance at that date. One documented exception: a payment
-confirmed in several bank lines on different days counts on the LAST of those days. Read only; nothing is stored.
+(the day the money moved on the account) or, while nothing moved, the document date. So the last row equals
+the card's Current Balance and the row at any value date equals the ledger balance at that date. One documented exception:
+a payment confirmed in several bank lines on different days counts on the LAST of those days. Read only; nothing is stored.
 """
 from odoo import fields, models, tools
 
@@ -46,12 +46,12 @@ class JournalTransaction(models.Model):
     amount_out = fields.Monetary(string='Outgoing', currency_field='currency_id', readonly=True)
     pending_balance = fields.Monetary(string='Pending', currency_field='company_currency_id', readonly=True)
     liquidity_balance = fields.Monetary(string='In Account', currency_field='company_currency_id', readonly=True)
-    balance_currency_id = fields.Many2one('res.currency', string='Balance Currency', readonly=True)
-    bank_date = fields.Date(string='Bank Date', readonly=True,
+    balance_currency_id = fields.Many2one('res.currency', readonly=True)
+    bank_date = fields.Date(readonly=True,
                             help='When the money moved on the account: the payment date when it posts directly to the '
                                  'bank / cash account, else the date of the bank line that confirmed it. Empty while '
                                  'the payment is still in process.')
-    value_date = fields.Date(string='Value Date', readonly=True)
+    value_date = fields.Date(readonly=True)
     balance_amount = fields.Monetary(string='Balance Effect', currency_field='balance_currency_id', readonly=True)
     balance_approx = fields.Boolean(readonly=True)
     running_balance = fields.Monetary(currency_field='balance_currency_id', readonly=True,

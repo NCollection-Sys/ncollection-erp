@@ -68,12 +68,12 @@ class InternalTransfer(models.Model):
              "any exchange gain or loss. Amount Received is what actually arrived.")
     company_currency_id = fields.Many2one(related='company_id.currency_id', string='Company Currency')
     accounting_rate = fields.Float(
-        string='Accounting Rate', digits=0, compute='_compute_exchange_preview', store=True,
+        digits=0, compute='_compute_exchange_preview', store=True,
         help="Odoo's rate on the transfer date: one unit sent = this many units received.")
-    effective_rate = fields.Float(string='Effective Rate', digits=0, compute='_compute_exchange_preview', store=True,
+    effective_rate = fields.Float(digits=0, compute='_compute_exchange_preview', store=True,
                                   help="Amount Received / Amount sent.")
     expected_amount = fields.Monetary(
-        string='Expected Amount', currency_field='destination_currency_id', compute='_compute_exchange_preview',
+        currency_field='destination_currency_id', compute='_compute_exchange_preview',
         store=True, help="(Amount - Bank Fee) at the accounting rate.")
     difference_amount = fields.Monetary(
         string='Conversion Difference', currency_field='destination_currency_id',
