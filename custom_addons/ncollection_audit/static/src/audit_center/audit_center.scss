@@ -179,6 +179,10 @@
     .nc-au-hint .fa { margin-inline-end: 4px; }
     @media (max-width: 900px) {
         .nc-au-type, .nc-au-company { display: none; }
+        .nc-au-ts { white-space: normal; min-width: 90px; }
+        .nc-au-doc { max-width: 150px; }
+        .nc-au-user { white-space: normal; }
+        .nc-au-table td, .nc-au-table th { padding-inline: 6px; }
         .nc-au-desc { min-width: 0; max-width: none; }
     }
 }
