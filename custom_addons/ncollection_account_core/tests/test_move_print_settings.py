@@ -67,8 +67,9 @@ class TestMovePrintSettings(AccountTestInvoicingCommon):
         self.assertAlmostEqual(self.inv_a.amount_residual, 60.0)
 
     def test_bank_terms_notes_are_per_document_switches(self):
-        bank = self.env['res.partner.bank'].create({'acc_number': 'AE070331234567890123456',
-                                                    'partner_id': self.env.company.partner_id.id, 'allow_out_payment': True})
+        bank = self.env['res.partner.bank'].create({
+            'acc_number': 'AE070331234567890123456', 'partner_id': self.env.company.partner_id.id,
+            'allow_out_payment': True})
         term = self.env['account.payment.term'].create({'name': 'NC 45 days', 'note': '<p>NCTERMS pay in 45</p>'})
         moves = self._nc_invoice(300.0) | self._nc_invoice(400.0)
         for move in moves:

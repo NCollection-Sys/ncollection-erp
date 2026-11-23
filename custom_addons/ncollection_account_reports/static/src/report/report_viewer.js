@@ -69,6 +69,7 @@ export class NcReportViewer extends Component {
             exportOpen: false,
             xbrlHelp: false,
             details: {},     // partner id -> { open, loading, rows }
+            moreOpen: false, // the advanced-filters row
         });
         this.mounted = false;
         this.pendingState = null;
@@ -220,6 +221,91 @@ export class NcReportViewer extends Component {
 
     async reset() {
         await this.run({});
+    }
+
+    // ------------------------------------------------------ compact filter bar
+    /** Period presets: they only fill From / To (the user still presses Apply); "custom" = whatever is typed. */
+    get periodPresets() {
+        return [
+            ["custom", _t("Custom")], ["this_month", _t("This month")], ["last_month", _t("Last month")],
+            ["this_quarter", _t("This quarter")], ["last_quarter", _t("Last quarter")],
+            ["this_year", _t("This year")], ["last_year", _t("Last year")],
+        ];
+    }
+
+    presetRange(key) {
+        const now = luxon.DateTime.local();
+        const fmt = (d) => d.toISODate();
+        switch (key) {
+            case "this_month": return [now.startOf("month"), now.endOf("month")].map(fmt);
+            case "last_month": { const d = now.minus({ months: 1 }); return [d.startOf("month"), d.endOf("month")].map(fmt); }
+            case "this_quarter": return [now.startOf("quarter"), now.endOf("quarter")].map(fmt);
+            case "last_quarter": { const d = now.minus({ quarters: 1 }); return [d.startOf("quarter"), d.endOf("quarter")].map(fmt); }
+            case "this_year": return [now.startOf("year"), now.endOf("year")].map(fmt);
+            case "last_year": { const d = now.minus({ years: 1 }); return [d.startOf("year"), d.endOf("year")].map(fmt); }
+        }
+        return null;
+    }
+
+    get periodPreset() {
+        const v = this.state.values;
+        for (const [key] of this.periodPresets) {
+            const r = this.presetRange(key);
+            if (r && r[0] === v.date_from && r[1] === v.date_to) {
+                return key;
+            }
+        }
+        return "custom";
+    }
+
+    applyPeriodPreset(key) {
+        const r = this.presetRange(key);
+        if (r) {
+            this.state.values.date_from = r[0];
+            this.state.values.date_to = r[1];
+        }
+    }
+
+    /** The Customers / Suppliers / All switch of the statement (the report's own partner_scope filter). */
+    get scopeFilter() {
+        return this.state.data ? this.state.data.filters.find((f) => f.name === "partner_scope" && f.type === "selection") : null;
+    }
+
+    setScope(value) {
+        if (this.state.values.partner_scope !== value) {
+            this.state.values.partner_scope = value;
+            this.onScopeChange();
+        }
+    }
+
+    get moreExtraFilters() {
+        return this.extraFilters.filter((f) => f.name !== "partner_scope");
+    }
+
+    get hasMoreFilters() {
+        return ["target_move", "comparison_type", "journal_ids", "account_ids"].some((n) => this.has(n))
+            || (this.has("company_id") && this.multiCompany) || this.moreExtraFilters.length > 0;
+    }
+
+    /** How many advanced filters differ from empty, so a folded row never hides an active filter. */
+    get moreFiltersCount() {
+        const v = this.state.values;
+        let n = 0;
+        for (const name of ["journal_ids", "account_ids"]) {
+            if (this.has(name) && (v[name] || []).length) {
+                n++;
+            }
+        }
+        if (this.has("comparison_type") && v.comparison_type && v.comparison_type !== "none") {
+            n++;
+        }
+        for (const f of this.moreExtraFilters) {
+            const val = v[f.name];
+            if (Array.isArray(val) ? val.length : f.type === "boolean" ? val : false) {
+                n++;
+            }
+        }
+        return n;
     }
 
     // ------------------------------------------------------ report shape

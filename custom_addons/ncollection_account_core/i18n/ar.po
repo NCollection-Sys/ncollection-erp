@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 03:14+0000\n"
-"PO-Revision-Date: 2026-11-23 03:14+0000\n"
+"POT-Creation-Date: 2026-11-23 08:06+0000\n"
+"PO-Revision-Date: 2026-11-23 08:06+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -345,6 +345,11 @@ msgid "Balance due"
 msgstr "الرصيد المستحق"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_bank_details
+msgid "Bank details"
+msgstr "تفاصيل البنك"
+
+#. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_nc_accounting_defaults_form
 msgid "Bank, cash and transfers"
 msgstr "البنك والنقد والتحويلات"
@@ -572,11 +577,14 @@ msgid "Date"
 msgstr "التاريخ"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_bank_details__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_company_details__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_customer_address__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_discount__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_notes__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_history__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_reference__default
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_terms__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_quantity__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_taxes__default
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_unit_price__default
@@ -817,11 +825,14 @@ msgid "HTTP Routing"
 msgstr "مسار HTTP"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_bank_details__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_company_details__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_customer_address__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_discount__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_notes__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_history__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_reference__hide
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_terms__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_quantity__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_taxes__hide
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_unit_price__hide
@@ -1031,6 +1042,11 @@ msgid "Not applied (credit on account)"
 msgstr "غير مُطبَّق (رصيد دائن في الحساب)"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_notes
+msgid "Notes"
+msgstr "الملاحظات"
+
+#. module: ncollection_account_core
 #: model:ir.model.fields,help:ncollection_account_core.field_account_move__nc_attachment_count
 #: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_attachment_count
 msgid "Number of files attached to this document (not the binary fields stored as attachments)."
@@ -1227,6 +1243,11 @@ msgstr "مرجع الدفع"
 #: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_document_type__nc_show_payment_status
 msgid "Payment status"
 msgstr "حالة الدفع"
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,field_description:ncollection_account_core.field_ncollection_move_print_setting__show_payment_terms
+msgid "Payment terms"
+msgstr "شروط الدفع"
 
 #. module: ncollection_account_core
 #: model:ir.model,name:ncollection_account_core.model_account_payment
@@ -1462,11 +1483,14 @@ msgid "Settlement Status"
 msgstr "حالة السداد"
 
 #. module: ncollection_account_core
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_bank_details__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_company_details__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_customer_address__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_discount__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_notes__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_history__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_reference__show
+#: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_payment_terms__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_quantity__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_taxes__show
 #: model:ir.model.fields.selection,name:ncollection_account_core.selection__ncollection_move_print_setting__show_unit_price__show
@@ -1708,6 +1732,11 @@ msgid "The excess already received for THIS document: what the payment or credit
 msgstr "الزيادة المستلمة بالفعل لهذا المستند: ما جلبته الدفعة أو الرصيد الدائن الذي سدّده فوق إجمالي المستند، عندما طُبّقت تلك الدفعة على هذا المستند وحده (انظر models/account_move_status.py). صفر خلاف ذلك."
 
 #. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__show_notes
+msgid "The invoice's Terms and Conditions / notes."
+msgstr "الشروط والأحكام / الملاحظات الخاصة بالفاتورة."
+
+#. module: ncollection_account_core
 #: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_unallocated_amount
 msgid "The part of the payment not applied to any document (an outstanding credit on the partner's account)."
 msgstr "جزء الدفعة غير المُطبَّق على أي مستند (رصيد دائن قائم في حساب الشريك)."
@@ -1716,6 +1745,11 @@ msgstr "جزء الدفعة غير المُطبَّق على أي مستند (ر
 #: model:ir.model.fields,help:ncollection_account_core.field_account_payment__nc_eligible_move_ids
 msgid "The partner's posted invoices / bills / credit notes this payment can be applied to."
 msgstr "فواتير الشريك وإشعاراته الدائنة المرحّلة التي يمكن تطبيق هذه الدفعة عليها."
+
+#. module: ncollection_account_core
+#: model:ir.model.fields,help:ncollection_account_core.field_ncollection_move_print_setting__show_bank_details
+msgid "The receiving bank account and the payment QR code printed with the payment communication."
+msgstr "الحساب البنكي المستلِم ورمز QR للدفع المطبوعان مع مرجع الدفع."
 
 #. module: ncollection_account_core
 #: model_terms:ir.ui.view,arch_db:ncollection_account_core.view_move_print_setting_form

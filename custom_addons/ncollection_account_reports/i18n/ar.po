@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 03:15+0000\n"
-"PO-Revision-Date: 2026-11-23 03:15+0000\n"
+"POT-Creation-Date: 2026-11-23 08:06+0000\n"
+"PO-Revision-Date: 2026-11-23 08:06+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -761,6 +761,12 @@ msgstr "الحالي"
 #: model:ir.model.fields,field_description:ncollection_account_reports.field_ncollection_account_report_line__current_amount
 msgid "Current Amount"
 msgstr "المبلغ الحالي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Custom"
+msgstr "مخصص"
 
 #. module: ncollection_account_reports
 #: model:ir.model.fields.selection,name:ncollection_account_reports.selection__ncollection_account_report_balance_sheet__comparison_type__custom
@@ -1618,6 +1624,24 @@ msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
 #. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Last month"
+msgstr "الشهر الماضي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Last quarter"
+msgstr "الربع الماضي"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "Last year"
+msgstr "السنة الماضية"
+
+#. module: ncollection_account_reports
 #: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_aged_partner__exclude_zero
 #: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_balance_sheet__exclude_zero
 #: model:ir.model.fields,help:ncollection_account_reports.field_ncollection_account_report_cost_center__exclude_zero
@@ -1695,6 +1719,12 @@ msgstr "القائمة"
 #: model_terms:ir.ui.view,arch_db:ncollection_account_reports.view_report_line_profitability_list
 msgid "Metric"
 msgstr "المقياس"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.xml:0
+msgid "More filters"
+msgstr "مرشحات إضافية"
 
 #. module: ncollection_account_reports
 #. odoo-python
@@ -3450,6 +3480,18 @@ msgid "This is not a financial report."
 msgstr "هذا ليس تقريرًا ماليًا."
 
 #. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "This month"
+msgstr "هذا الشهر"
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "This quarter"
+msgstr "هذا الربع"
+
+#. module: ncollection_account_reports
 #. odoo-python
 #: code:addons/ncollection_account_reports/wizard/account_report_line.py:0
 msgid "This report line does not point at a financial report."
@@ -3478,6 +3520,12 @@ msgstr "لا توجد قيود يومية لهذا الصف."
 #: code:addons/ncollection_account_reports/wizard/partner_statement.py:0
 msgid "This run covers %(count)s partners, and the PDF would contain every partner's statement. Select a single partner to send a statement by email; to share several, print the run."
 msgstr "يشمل هذا التشغيل %(count)s شركاء، وسيحتوي ملف PDF على كشف حساب كل شريك. اختر شريكًا واحدًا لإرسال كشف الحساب بالبريد الإلكتروني، أو اطبع التشغيل لمشاركة عدة كشوف."
+
+#. module: ncollection_account_reports
+#. odoo-javascript
+#: code:addons/ncollection_account_reports/static/src/report/report_viewer.js:0
+msgid "This year"
+msgstr "هذه السنة"
 
 #. module: ncollection_account_reports
 #. odoo-javascript

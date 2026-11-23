@@ -52,7 +52,10 @@ class JournalTransaction(models.Model):
                             help='When the money moved on the account: the payment date when it posts directly to the '
                                  'bank / cash account, else the date of the bank line that confirmed it. Empty while '
                                  'the payment is still in process.')
-    value_date = fields.Date(readonly=True)
+    value_date = fields.Date(
+        readonly=True,
+        help='The date this operation counts on the account and in the running balance: the bank date when the bank '
+             'confirmed it, else the document date. The list is ordered by it.')
     balance_amount = fields.Monetary(string='Balance Effect', currency_field='balance_currency_id', readonly=True)
     balance_approx = fields.Boolean(readonly=True)
     running_balance = fields.Monetary(currency_field='balance_currency_id', readonly=True,

@@ -63,6 +63,16 @@
                 </header>
 
                 <form class="o_nc_rep__filters" t-on-submit.prevent="apply">
+                  <!-- Primary row: what a statement is read by (period, scope, partners), always one line wide. -->
+                  <div class="o_nc_rep__frow">
+                    <div t-if="has('date_from') and has('date_to')" class="o_nc_rep__f o_nc_rep__f--period">
+                        <label for="f_pp">Period</label>
+                        <select id="f_pp" t-att-value="periodPreset" t-on-change="(ev) => this.applyPeriodPreset(ev.target.value)">
+                            <t t-foreach="periodPresets" t-as="pp" t-key="pp[0]">
+                                <option t-att-value="pp[0]" t-att-selected="pp[0] === periodPreset" t-esc="pp[1]"/>
+                            </t>
+                        </select>
+                    </div>
                     <div t-if="has('date_from')" class="o_nc_rep__f">
                         <label for="f_df">From</label>
                         <input id="f_df" type="date" t-model="state.values.date_from"/>
@@ -71,6 +81,32 @@
                         <label for="f_dt">To</label>
                         <input id="f_dt" type="date" t-model="state.values.date_to"/>
                     </div>
+                    <div t-if="scopeFilter" class="o_nc_rep__f">
+                        <span class="o_nc_rep__flabel" id="f_scope_l" t-esc="scopeFilter.label"/>
+                        <div class="o_nc_rep__seg" role="radiogroup" aria-labelledby="f_scope_l">
+                            <t t-foreach="scopeFilter.options" t-as="opt" t-key="opt[0]">
+                                <button type="button" role="radio" t-att-aria-checked="state.values.partner_scope === opt[0] ? 'true' : 'false'"
+                                        t-att-class="'o_nc_rep__segbtn' + (state.values.partner_scope === opt[0] ? ' is-active' : '')"
+                                        t-on-click="() => this.setScope(opt[0])" t-esc="opt[1]"/>
+                            </t>
+                        </div>
+                    </div>
+                    <t t-if="has('partner_ids')" t-call="ncollection_account_reports.ReportViewer.Picker">
+                        <t t-set="pf" t-value="field('partner_ids')"/>
+                    </t>
+                    <div class="o_nc_rep__f o_nc_rep__f--buttons">
+                        <button t-if="hasMoreFilters" type="button" class="btn btn-light o_nc_rep__more"
+                                t-att-aria-expanded="state.moreOpen ? 'true' : 'false'" aria-controls="nc_rep_more"
+                                t-on-click="() => this.state.moreOpen = !this.state.moreOpen">
+                            <i class="fa fa-sliders" aria-hidden="true"/> More filters
+                            <span t-if="moreFiltersCount" class="badge rounded-pill text-bg-primary ms-1" t-esc="moreFiltersCount"/>
+                        </button>
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                        <button type="button" class="btn btn-secondary" t-on-click="reset">Reset</button>
+                    </div>
+                  </div>
+                  <!-- Advanced filters: folded away so the bar never runs wider than the page. -->
+                  <div t-if="state.moreOpen and hasMoreFilters" id="nc_rep_more" class="o_nc_rep__frow o_nc_rep__frow--more">
                     <div t-if="has('target_move')" class="o_nc_rep__f">
                         <label for="f_tm">Entries</label>
                         <select id="f_tm" t-model="state.values.target_move">
@@ -105,12 +141,12 @@
                             </t>
                         </select>
                     </div>
-                    <t t-foreach="['journal_ids', 'account_ids', 'partner_ids']" t-as="fname" t-key="fname">
+                    <t t-foreach="['journal_ids', 'account_ids']" t-as="fname" t-key="fname">
                         <t t-if="has(fname)" t-call="ncollection_account_reports.ReportViewer.Picker">
                             <t t-set="pf" t-value="field(fname)"/>
                         </t>
                     </t>
-                    <t t-foreach="extraFilters" t-as="xf" t-key="xf.name">
+                    <t t-foreach="moreExtraFilters" t-as="xf" t-key="xf.name">
                         <div t-if="xf.type === 'selection'" class="o_nc_rep__f">
                             <label t-att-for="'f_' + xf.name" t-esc="xf.label"/>
                             <select t-att-id="'f_' + xf.name" t-model="state.values[xf.name]"
@@ -131,10 +167,7 @@
                             <t t-set="pf" t-value="xf"/>
                         </t>
                     </t>
-                    <div class="o_nc_rep__f o_nc_rep__f--buttons">
-                        <button type="submit" class="btn btn-primary">Apply</button>
-                        <button type="button" class="btn btn-secondary" t-on-click="reset">Reset</button>
-                    </div>
+                  </div>
                 </form>
                 <div t-if="chips.length" class="o_nc_rep__chips">
                     <span t-foreach="chips" t-as="chip" t-key="chip_index" class="o_nc_rep__chip">
