@@ -43,6 +43,12 @@ class AccountPayment(models.Model):
         string='Pending Amount', compute='_compute_nc_pending', currency_field='currency_id',
         help="What still waits on the outstanding account (signed: receipts positive, payments negative).")
     nc_can_mark_paid = fields.Boolean(compute='_compute_nc_pending')
+    nc_suspense_fallback = fields.Boolean(
+        string='Posts to Suspense', compute='_compute_nc_suspense_fallback',
+        help="No payee yet (no Customer / Supplier, or Type Account with no account): the counterpart posts to the "
+             "company's Unidentified Payments (Suspense) account, to be reclassified later.")
+    nc_suspense_account_id = fields.Many2one(related='company_id.nc_payment_suspense_account_id',
+                                             string='Suspense Account')
     nc_settlement_line_ids = fields.One2many('account.bank.statement.line', 'nc_settlement_payment_id',
                                              string='Settlements', readonly=True)
 
@@ -97,15 +103,36 @@ class AccountPayment(models.Model):
                     pay.date or fields.Date.today()) if lines else 0.0
             pay.nc_can_mark_paid = bool(lines) and pay.company_id in self.env.companies
 
-    @api.depends('nc_counterpart_type', 'nc_counterpart_account_id', 'nc_operation')
+    @api.depends('nc_operation', 'nc_counterpart_type', 'nc_counterpart_account_id', 'partner_id')
+    def _compute_nc_suspense_fallback(self):
+        for pay in self:
+            kind = pay.nc_counterpart_type
+            pay.nc_suspense_fallback = pay.nc_operation in OPERATION_DIRECTION and (
+                (kind == 'account' and not pay.nc_counterpart_account_id)
+                or (kind in ('customer', 'supplier') and not pay.partner_id))
+
+    @api.depends('nc_counterpart_type', 'nc_counterpart_account_id', 'nc_operation', 'partner_id',
+                 'company_id.nc_payment_suspense_account_id')
     def _compute_destination_account_id(self):
         res = super()._compute_destination_account_id()
         for pay in self:
             if pay.nc_operation == 'transfer':
                 pay.destination_account_id = pay.company_id.transfer_account_id
+            elif pay.nc_suspense_fallback:
+                # Only when nothing was chosen: a selected account or payee is never overridden.
+                pay.destination_account_id = pay.company_id.nc_payment_suspense_account_id
             elif pay.nc_counterpart_type == 'account':
                 pay.destination_account_id = pay.nc_counterpart_account_id
         return res
+
+    def action_post(self):
+        for pay in self.filtered('nc_suspense_fallback'):
+            if not pay.company_id.nc_payment_suspense_account_id:
+                raise UserError(self.env._(
+                    "%(payment)s has no payee. Choose the Customer, Supplier or Account, or configure the "
+                    "Unidentified Payments (Suspense) account of %(company)s in Accounting Settings.",
+                    payment=pay.display_name, company=pay.company_id.display_name))
+        return super().action_post()
 
     @api.onchange('nc_counterpart_type')
     def _onchange_nc_counterpart_type(self):
@@ -190,12 +217,20 @@ class AccountPayment(models.Model):
             kind = pay.nc_counterpart_type
             if not kind:
                 raise ValidationError(self.env._("Choose the Type: Customer, Supplier or Account."))
+            suspense = pay.company_id.nc_payment_suspense_account_id
+            if pay.nc_suspense_fallback and suspense and pay.destination_account_id != suspense:
+                raise ValidationError(self.env._("A payment without a payee must post against %(account)s.",
+                                                 account=suspense.display_name))
             if kind == 'account':
                 account = pay.nc_counterpart_account_id
                 if pay.partner_id:
                     raise ValidationError(self.env._("An Account operation has no partner."))
                 if not account:
-                    raise ValidationError(self.env._("Choose the account of this operation."))
+                    if not suspense:
+                        raise ValidationError(self.env._(
+                            "Choose the account of this operation, or configure the Unidentified Payments "
+                            "(Suspense) account in Accounting Settings."))
+                    continue
                 if (account.account_type in BLOCKED_ACCOUNT_TYPES
                         or account in pay._nc_forbidden_counterpart_accounts()
                         or account.company_ids and pay.company_id not in account.company_ids

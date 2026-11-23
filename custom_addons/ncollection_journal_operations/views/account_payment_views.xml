@@ -53,14 +53,24 @@
                 <field name="nc_allowed_account_ids" invisible="1"/>
                 <field name="analytic_precision" invisible="1"/>
                 <field name="nc_counterpart_type" required="1" readonly="state != 'draft'"/>
-                <field name="partner_id" string="Payee" required="nc_counterpart_type in ('customer', 'supplier')"
+                <field name="nc_suspense_fallback" invisible="1"/>
+                <field name="partner_id" string="Payee" placeholder="Unknown yet: posts to Suspense"
                        invisible="nc_counterpart_type not in ('customer', 'supplier')" readonly="state != 'draft'"
                        domain="['|', ('customer_rank', '>', 0), ('commercial_partner_id.customer_rank', '>', 0)] if nc_counterpart_type == 'customer' else ['|', ('supplier_rank', '>', 0), ('commercial_partner_id.supplier_rank', '>', 0)]"
                        context="{'res_partner_search_mode': nc_counterpart_type, 'default_is_company': True}"
                        options="{'no_quick_create': True}"/>
-                <field name="nc_counterpart_account_id" string="Payee" required="nc_counterpart_type == 'account'"
+                <field name="nc_counterpart_account_id" string="Payee" placeholder="None: posts to Suspense"
                        invisible="nc_counterpart_type != 'account'" readonly="state != 'draft'"
                        options="{'no_create': True}"/>
+                <div colspan="2" class="alert alert-warning py-2 mb-2 o_nc_suspense_note" role="status"
+                     invisible="not nc_suspense_fallback">
+                    No payee: the counterpart posts to
+                    <field name="nc_suspense_account_id" class="d-inline fw-bold" readonly="1" nolabel="1"
+                           invisible="not nc_suspense_account_id"/>
+                    <span invisible="nc_suspense_account_id">the Unidentified Payments (Suspense) account, which is
+                        not configured yet: set it in Accounting Settings before confirming</span>.
+                    Reclassify it once the payee is known.
+                </div>
             </xpath>
             <xpath expr="//field[@name='memo']" position="attributes">
                 <attribute name="string">Description</attribute>

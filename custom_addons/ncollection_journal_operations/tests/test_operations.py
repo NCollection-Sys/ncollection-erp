@@ -812,3 +812,77 @@ class TestPostedBalanceAndCard(JournalOpsCommon):
         for method in ('action_nc_ops_transactions', 'action_nc_ops_reconcile', 'action_nc_bank_batches',
                        'action_nc_bank_duplicates', 'action_nc_bank_new', 'action_nc_ops_posted_balance'):
             self.assertIn(f'name="{method}"', arch, method)
+
+
+@tagged('post_install', '-at_install')
+class TestSuspenseFallback(JournalOpsCommon):
+    """Request 11: no payee -> the company's Unidentified Payments (Suspense) account, never the bank Suspense,
+    Outstanding, transfer, receivable or payable account; a chosen account or payee is never overridden."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.suspense = cls.env['account.account'].create({
+            'code': '109901', 'name': 'Unidentified Payments (ops test)', 'account_type': 'asset_current',
+            'reconcile': True})
+
+    def _counterpart(self, pay):
+        return pay.move_id.line_ids.filtered(lambda line: line.account_id == pay.destination_account_id)
+
+    def test_unconfigured_is_a_clear_error_never_an_arbitrary_account(self):
+        self.company.nc_payment_suspense_account_id = False
+        receipt = self._op(self.bank, 'receipt', 'customer', 40.0, post=False)
+        self.assertTrue(receipt.nc_suspense_fallback)
+        with self.assertRaises(UserError):
+            receipt.action_post()
+        with self.assertRaises(ValidationError):
+            self._op(self.bank, 'payment', 'account', 10.0, post=False)
+
+    def test_every_case_without_a_payee_posts_balanced_to_suspense(self):
+        self.company.nc_payment_suspense_account_id = self.suspense
+        cases = [('receipt', 'customer', 100.0), ('payment', 'supplier', 60.0), ('payment', 'account', 25.0),
+                 ('receipt', 'account', 15.0)]
+        for operation, kind, amount in cases:
+            with self.subTest(operation=operation, kind=kind):
+                pay = self._op(self.bank, operation, kind, amount)
+                self.assertTrue(pay.nc_suspense_fallback)
+                self.assertEqual(pay.destination_account_id, self.suspense)
+                self.assertEqual(pay.state, 'in_process')
+                lines = pay.move_id.line_ids
+                self.assertAlmostEqual(sum(lines.mapped('debit')), sum(lines.mapped('credit')))
+                sign = -1 if operation == 'receipt' else 1
+                self.assertAlmostEqual(self._counterpart(pay).balance, sign * amount)
+                self.assertNotIn(self.suspense, lines.account_id.filtered(
+                    lambda a: a == self.bank.suspense_account_id))
+
+    def test_a_chosen_payee_or_account_is_never_overridden(self):
+        self.company.nc_payment_suspense_account_id = self.suspense
+        receipt = self._op(self.bank, 'receipt', 'customer', 10.0, self.customer)
+        self.assertFalse(receipt.nc_suspense_fallback)
+        self.assertEqual(receipt.destination_account_id, self.customer.property_account_receivable_id)
+        fee = self._op(self.bank, 'payment', 'account', 5.0, account=self.fees)
+        self.assertEqual(fee.destination_account_id, self.fees)
+
+    def test_suspense_is_cleared_later_by_a_reclassification(self):
+        self.company.nc_payment_suspense_account_id = self.suspense
+        receipt = self._op(self.bank, 'receipt', 'customer', 70.0)
+        invoice = self._invoice(self.customer, 70.0)
+        reclass = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': self.company_data['default_journal_misc'].id,
+            'line_ids': [(0, 0, {'account_id': self.suspense.id, 'debit': 70.0, 'name': 'payee identified'}),
+                         (0, 0, {'account_id': self.customer.property_account_receivable_id.id, 'credit': 70.0,
+                                 'partner_id': self.customer.id, 'name': 'payee identified'})]})
+        reclass.action_post()
+        (self._counterpart(receipt) | reclass.line_ids.filtered(lambda l: l.account_id == self.suspense)).reconcile()
+        (invoice.line_ids | reclass.line_ids).filtered(
+            lambda l: l.account_id == self.customer.property_account_receivable_id).reconcile()
+        self.assertEqual(invoice.payment_state, 'paid')
+        self.assertTrue(self._counterpart(receipt).reconciled, 'suspense cleared')
+
+    def test_the_suspense_account_cannot_be_a_bank_or_clearing_account(self):
+        for account in (self.bank.default_account_id, self.company.transfer_account_id,
+                        self.company.account_journal_suspense_account_id,
+                        self.customer.property_account_receivable_id):
+            with self.subTest(account=account.display_name), self.assertRaises(ValidationError):
+                with self.env.cr.savepoint():
+                    self.company.nc_payment_suspense_account_id = account

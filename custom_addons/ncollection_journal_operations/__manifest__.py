@@ -22,6 +22,7 @@
         'security/ir.model.access.csv',
         'security/security.xml',
         'data/sequence.xml',
+        'views/res_config_settings_views.xml',
         'views/journal_transaction_views.xml',
         'views/account_payment_views.xml',
         'views/internal_transfer_views.xml',
