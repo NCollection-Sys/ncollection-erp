@@ -44,7 +44,9 @@ class ResPartner(models.Model):
                                         groups='account.group_account_readonly')
 
     def _nc_fin_companies(self):
-        return self.env.companies
+        """The current company only: its currency is the column's, and the Summary statement runs on it. Summing
+        several selected companies would add AED to USD (accounting review H2)."""
+        return self.env.company
 
     @api.depends_context('allowed_company_ids')
     def _compute_nc_financials(self):
@@ -53,8 +55,8 @@ class ResPartner(models.Model):
         currency = self.env.company.currency_id
         partners = self.filtered('id')
         # exactly the partner_id the statement engine filters on (one row of the list = one statement)
-        commercial = {p.id: p.id for p in partners}
-        ids = list(commercial.values())
+        own = {p.id: p.id for p in partners}
+        ids = list(own.values())
         balances, counts = {}, {}
         if ids:
             for partner, account_type, balance, count in self.env['account.move.line']._read_group(
@@ -74,7 +76,7 @@ class ResPartner(models.Model):
                     groupby=['partner_id', 'move_type', 'payment_state'], aggregates=['__count']):
                 open_docs[(partner.id, move_type, state)] = count
         for partner in self:
-            cid = commercial.get(partner.id)
+            cid = own.get(partner.id)
             receivable = currency.round(balances.get((cid, RECEIVABLE), 0.0))
             payable = currency.round(-balances.get((cid, PAYABLE), 0.0))
             partner.nc_fin_currency_id = currency

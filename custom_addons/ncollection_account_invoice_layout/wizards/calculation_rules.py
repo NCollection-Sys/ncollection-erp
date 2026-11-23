@@ -47,7 +47,13 @@ class InvoiceCalculationRules(models.TransientModel):
             raise AccessError(self.env._("Only an accounting administrator can change the calculation rules."))
         if self.company_id not in self.env.user.company_ids:
             raise AccessError(self.env._("You cannot change the rules of this company."))
+        policy = self.env.get('ncollection.settings.policy')
+        if policy is not None:
+            policy._nc_require('accounting_defaults', 'edit')     # the platform's Unified Settings level
         self.company_id.sudo().nc_discount_tax_timing = self.discount_tax_timing
+        if hasattr(self.env.user, '_nc_audit'):
+            self.env.user._nc_audit('admin_settings_change', 'company %s: nc_discount_tax_timing=%s' % (
+                self.company_id.id, self.discount_tax_timing))
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
             'type': 'success', 'title': self.env._("Calculation Rules saved"),
             'message': self.env._("Draft invoices use them when next recalculated; posted invoices are unchanged."),

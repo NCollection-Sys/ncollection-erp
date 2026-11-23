@@ -75,6 +75,13 @@ class MovePrintSetting(models.Model):
 
     _move_unique = models.Constraint('UNIQUE(move_id)', 'An accounting document has one set of Print Settings.')
 
+    @api.constrains('template_id')
+    def _check_template(self):
+        for rec in self.filtered('template_id'):
+            if 'account.move' not in rec.template_id.sudo().report_ids.mapped('model'):
+                raise ValidationError(self.env._("%s is not a Print Template of invoices.",
+                                                 rec.template_id.display_name))
+
     @api.constrains('primary_color', 'text_color', 'font_size')
     def _check_values(self):
         for rec in self:

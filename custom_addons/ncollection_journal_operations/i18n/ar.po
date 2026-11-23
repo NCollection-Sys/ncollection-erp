@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 01:51+0000\n"
-"PO-Revision-Date: 2026-11-23 01:51+0000\n"
+"POT-Creation-Date: 2026-11-23 03:14+0000\n"
+"PO-Revision-Date: 2026-11-23 03:14+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -294,7 +294,7 @@ msgstr "المبلغ المستلم - المبلغ المتوقع."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_ncollection_internal_transfer__effective_rate
-msgid "Amount Received / Amount sent."
+msgid "Amount Received / (Amount sent - Bank Fee)."
 msgstr "المبلغ المستلم / المبلغ المرسل."
 
 #. module: ncollection_journal_operations
@@ -1241,6 +1241,11 @@ msgid "Rate Missing"
 msgstr "سعر الصرف مفقود"
 
 #. module: ncollection_journal_operations
+#: model:ir.model.fields,field_description:ncollection_journal_operations.field_ncollection_internal_transfer__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
+
+#. module: ncollection_journal_operations
 #: model_terms:ir.ui.view,arch_db:ncollection_journal_operations.view_internal_transfer_form
 msgid "Reason of the transfer"
 msgstr "سبب التحويل"
@@ -1478,8 +1483,8 @@ msgstr "لم تتم تسوية بنود التحويل بالكامل؛ لم ي�
 #. module: ncollection_journal_operations
 #. odoo-python
 #: code:addons/ncollection_journal_operations/models/res_company.py:0
-msgid "The unidentified-payments account must differ from the transfer account and from the bank Suspense account."
-msgstr "يجب أن يختلف حساب المدفوعات غير المحددة عن حساب التحويل وعن حساب المعلّق البنكي."
+msgid "The unidentified-payments account must differ from the transfer account, the bank Suspense accounts, the Outstanding Receipts / Payments accounts and the bank / cash accounts."
+msgstr "يجب أن يختلف حساب المدفوعات غير المحددة عن حساب التحويل وحسابات المعلّق البنكية وحسابات المقبوضات / المدفوعات المعلّقة وحسابات البنك / النقدية."
 
 #. module: ncollection_journal_operations
 #: model:ir.model.fields,help:ncollection_journal_operations.field_account_bank_statement_line__nc_settlement_payment_id

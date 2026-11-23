@@ -74,3 +74,11 @@ class TestAccountBalancesLedger(AccountTestInvoicingCommon):
         bank = {r['account_id']: r for r in later._nc_compute_lines()}[self.bank.id]
         self.assertAlmostEqual(bank['opening'], 700.0)
         self.assertAlmostEqual(bank['balance'], 730.0)
+
+    def test_a_period_across_fiscal_years_still_runs(self):
+        """Account Balances never refused a multi-year period; with an opening it still must not."""
+        wide = self._run('ncollection.account.report.reference', date_from=self.fy + timedelta(days=1),
+                         date_to=self.fy + timedelta(days=400))
+        bank = {r['account_id']: r for r in wide._nc_compute_lines()}[self.bank.id]
+        self.assertAlmostEqual(bank['opening'] + bank['debit'] - bank['credit'], bank['balance'])
+        self.assertAlmostEqual(bank['balance'], 730.0)

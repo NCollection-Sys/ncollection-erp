@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 01:51+0000\n"
-"PO-Revision-Date: 2026-11-23 01:51+0000\n"
+"POT-Creation-Date: 2026-11-23 03:15+0000\n"
+"PO-Revision-Date: 2026-11-23 03:15+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -226,7 +226,7 @@ msgstr "قواعد الاحتساب للشركة (الخصم قبل الضريب
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
-#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+#: code:addons/ncollection_account_invoice_layout/wizards/calculation_rules.py:0
 msgid "Calculation Rules saved"
 msgstr "تم حفظ قواعد الاحتساب"
 
@@ -443,7 +443,7 @@ msgstr "حساب التوزيع التحليلي"
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
-#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+#: code:addons/ncollection_account_invoice_layout/wizards/calculation_rules.py:0
 msgid "Draft invoices use them when next recalculated; posted invoices are unchanged."
 msgstr "تستخدمها مسودات الفواتير عند إعادة احتسابها التالية؛ والفواتير المرحّلة لا تتغير."
 
@@ -514,7 +514,7 @@ msgstr "الأعمدة المخفية"
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__id
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_res_company__id
 msgid "ID"
-msgstr "المعرّف"
+msgstr "المُعرف"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,help:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_needaction
@@ -724,7 +724,7 @@ msgstr "يمكن لمدير المحاسبة فقط تغيير الإعداد ا
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
-#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+#: code:addons/ncollection_account_invoice_layout/wizards/calculation_rules.py:0
 msgid "Only an accounting administrator can change the calculation rules."
 msgstr "يمكن لمسؤول المحاسبة فقط تغيير قواعد الاحتساب."
 
@@ -763,6 +763,12 @@ msgstr "لا يمكن إعادة تسعير بنود فاتورة مرحّلة �
 #: model_terms:ir.ui.view,arch_db:ncollection_account_invoice_layout.view_nc_invoice_calculation_rules_form
 msgid "Preview"
 msgstr "معاينة"
+
+#. module: ncollection_account_invoice_layout
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__rating_ids
+#: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_column_pref__rating_ids
+msgid "Ratings"
+msgstr "التقييمات"
 
 #. module: ncollection_account_invoice_layout
 #: model:ir.model.fields,field_description:ncollection_account_invoice_layout.field_ncollection_invoice_adjustment_type__message_has_sms_error
@@ -957,6 +963,18 @@ msgstr ""
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+msgid "UAE VAT: a discount given at the time of supply reduces the value of supply, so the discount is applied before tax."
+msgstr "ضريبة القيمة المضافة في الإمارات: الخصم الممنوح وقت التوريد يُخفّض قيمة التوريد، لذا يُطبَّق الخصم قبل الضريبة."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
+#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+msgid "UAE e-invoicing is installed: an invoice allowance must carry a VAT category, so the discount is applied before tax."
+msgstr "الفوترة الإلكترونية الإماراتية مثبّتة: يجب أن يحمل خصم الفاتورة فئة ضريبية، لذا يُطبَّق الخصم قبل الضريبة."
+
+#. module: ncollection_account_invoice_layout
+#. odoo-python
 #: code:addons/ncollection_account_invoice_layout/models/column_preference.py:0
 msgid "Unknown invoice line column: %s"
 msgstr "عمود غير معروف في بنود الفاتورة: %s"
@@ -1005,7 +1023,7 @@ msgstr "أيّ من نسبة الخصم والخصم أدخله المستخدم
 
 #. module: ncollection_account_invoice_layout
 #. odoo-python
-#: code:addons/ncollection_account_invoice_layout/models/calculation_rules.py:0
+#: code:addons/ncollection_account_invoice_layout/wizards/calculation_rules.py:0
 msgid "You cannot change the rules of this company."
 msgstr "لا يمكنك تغيير قواعد هذه الشركة."
 

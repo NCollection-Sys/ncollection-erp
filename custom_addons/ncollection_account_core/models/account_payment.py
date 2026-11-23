@@ -327,6 +327,7 @@ class AccountPayment(models.Model):
     def action_nc_post_and_allocate(self):
         """The payment form's Confirm: Odoo posts the payment, then it is applied through Odoo's reconciliation.
         Locked so a double click or a second user never applies the same payment twice."""
+        self.check_access('write')            # before the lock: no locking of records the user cannot write
         try:
             self.env.cr.execute('SELECT id FROM account_payment WHERE id = ANY(%s) FOR UPDATE NOWAIT', [self.ids])
         except errors.LockNotAvailable:

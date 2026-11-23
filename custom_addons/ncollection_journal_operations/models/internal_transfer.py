@@ -68,24 +68,24 @@ class InternalTransfer(models.Model):
              "any exchange gain or loss. Amount Received is what actually arrived.")
     company_currency_id = fields.Many2one(related='company_id.currency_id', string='Company Currency')
     accounting_rate = fields.Float(
-        digits=0, compute='_compute_exchange_preview', store=True,
+        digits=0, compute='_compute_exchange_preview',
         help="Odoo's rate on the transfer date: one unit sent = this many units received.")
-    effective_rate = fields.Float(digits=0, compute='_compute_exchange_preview', store=True,
-                                  help="Amount Received / Amount sent.")
+    effective_rate = fields.Float(digits=0, compute='_compute_exchange_preview',
+                                  help="Amount Received / (Amount sent - Bank Fee).")
     expected_amount = fields.Monetary(
         currency_field='destination_currency_id', compute='_compute_exchange_preview',
         store=True, help="(Amount - Bank Fee) at the accounting rate.")
     difference_amount = fields.Monetary(
         string='Conversion Difference', currency_field='destination_currency_id',
-        compute='_compute_exchange_preview', store=True, help="Amount Received - Expected Amount.")
+        compute='_compute_exchange_preview', help="Amount Received - Expected Amount.")
     fee_company_amount = fields.Monetary(string='Bank Fee (company currency)', currency_field='company_currency_id',
-                                         compute='_compute_exchange_preview', store=True)
+                                         compute='_compute_exchange_preview')
     exchange_estimate = fields.Monetary(
         string='Exchange Gain / Loss (estimate)', currency_field='company_currency_id',
-        compute='_compute_exchange_preview', store=True,
+        compute='_compute_exchange_preview',
         help="Company currency: value received - value sent net of the fee, at the accounting rates. Positive = gain.")
-    show_exchange = fields.Boolean(compute='_compute_exchange_preview', store=True)
-    rate_missing = fields.Boolean(compute='_compute_exchange_preview', store=True)
+    show_exchange = fields.Boolean(compute='_compute_exchange_preview')
+    rate_missing = fields.Boolean(compute='_compute_exchange_preview')
     fee_move_id = fields.Many2one('account.move', string='Bank Fee Entry', readonly=True, copy=False)
     exchange_move_id = fields.Many2one('account.move', string='Exchange Difference Entry', readonly=True, copy=False)
     exchange_amount = fields.Monetary(
@@ -182,13 +182,13 @@ class InternalTransfer(models.Model):
             received_company = dst._convert(rec.destination_amount, ccy, company, rec.date)
             rec.update({
                 'accounting_rate': rate,
-                'effective_rate': rec.destination_amount / rec.amount,
+                'effective_rate': rec.destination_amount / net if net else 0.0,
                 'expected_amount': expected,
                 'difference_amount': dst.round(rec.destination_amount - expected),
                 'fee_company_amount': src._convert(rec.fee_amount or 0.0, ccy, company, rec.date),
                 'exchange_estimate': ccy.round(received_company - sent_net_company) if src != dst else 0.0,
                 'show_exchange': src != dst or bool(rec.fee_amount),
-                'rate_missing': src != dst and rec._nc_rate_missing(),
+                'rate_missing': rec._nc_rate_missing(),
             })
 
     @api.constrains('source_journal_id', 'destination_journal_id', 'destination_amount', 'amount', 'fee_amount')
@@ -271,7 +271,7 @@ class InternalTransfer(models.Model):
             raise UserError(self.env._(
                 "Both journals need a payment method (Outgoing on %(sender)s, Incoming on %(receiver)s).",
                 sender=self.source_journal_id.display_name, receiver=self.destination_journal_id.display_name))
-        if self.multi_currency and self._nc_rate_missing():
+        if self._nc_rate_missing():
             raise UserError(self.env._(
                 "No exchange rate on or before %(date)s for this transfer's currencies: add the rate first; a "
                 "transfer is never converted at a guessed rate.", date=self.date))
@@ -310,6 +310,11 @@ class InternalTransfer(models.Model):
         # when the two sides are in different foreign currencies), then everything is reconciled together.
         residual = company.currency_id.round(sum(transfer_lines.mapped('balance')))
         exchange_move = self.env['account.move']
+        # one currency end to end: any residual is conversion rounding of the fee, never an exchange difference;
+        # it is absorbed by the fee entry instead (accounting review M3)
+        if not self.multi_currency and fee_move and not company.currency_id.is_zero(residual):
+            self._nc_absorb_rounding(fee_move, residual)
+            residual = 0.0
         if not company.currency_id.is_zero(residual):
             exchange_move = self._nc_post_exchange_entry(name, memo, residual)
             transfer_lines |= exchange_move.line_ids.filtered(
@@ -352,6 +357,17 @@ class InternalTransfer(models.Model):
             ]})
         move.action_post()
         return move
+
+    def _nc_absorb_rounding(self, fee_move, residual):
+        """Shift a rounding residual of a one-currency transfer into its fee entry (still draft-free: the entry is
+        re-balanced on both of its lines, so it stays balanced and the clearing account nets to zero)."""
+        company = self.company_id
+        fee_move.button_draft()
+        clearing = fee_move.line_ids.filtered(lambda line: line.account_id == company.transfer_account_id)
+        other = fee_move.line_ids - clearing
+        fee_move.write({'line_ids': [(1, clearing.id, {'balance': clearing.balance - residual}),
+                                     (1, other.id, {'balance': other.balance + residual})]})
+        fee_move.action_post()
 
     def _nc_post_exchange_entry(self, name, memo, residual):
         """Close ``residual`` (company currency, debit-positive) left on the transfer account: a loss when the value

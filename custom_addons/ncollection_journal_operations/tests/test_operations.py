@@ -951,7 +951,7 @@ class TestTransferFeesAndExchange(JournalOpsCommon):
         self.assertAlmostEqual(transfer.expected_amount, 196.0)
         self.assertAlmostEqual(transfer.difference_amount, -6.0)
         self.assertAlmostEqual(transfer.exchange_estimate, -3.0)
-        self.assertAlmostEqual(transfer.effective_rate, 1.9)
+        self.assertAlmostEqual(transfer.effective_rate, 190.0 / 98.0)   # received / (sent - fee)
         transfer.action_post()
         self._assert_booked(transfer, 2.0, -3.0)
 

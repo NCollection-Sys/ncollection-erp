@@ -39,10 +39,17 @@ class ResCompany(models.Model):
                         "%(account)s cannot hold unidentified payments: use a reconcilable current asset or current "
                         "liability account (never a receivable, payable or bank account).",
                         account=suspense.display_name))
-                if suspense in (company.transfer_account_id | company.account_journal_suspense_account_id):
+                journals = self.env['account.journal'].sudo().search([('company_id', '=', company.id),
+                                                                      ('type', 'in', ('bank', 'cash'))])
+                methods = journals.inbound_payment_method_line_ids | journals.outbound_payment_method_line_ids
+                forbidden = (company.transfer_account_id | company.account_journal_suspense_account_id
+                             | journals.default_account_id | journals.suspense_account_id
+                             | methods.payment_account_id)
+                if suspense in forbidden:
                     raise ValidationError(self.env._(
-                        "The unidentified-payments account must differ from the transfer account and from the bank "
-                        "Suspense account."))
+                        "The unidentified-payments account must differ from the transfer account, the bank "
+                        "Suspense accounts, the Outstanding Receipts / Payments accounts and the bank / cash "
+                        "accounts."))
             fee = company.nc_bank_fee_account_id
             if fee and fee.account_type not in FEE_TYPES:
                 raise ValidationError(self.env._("%(account)s is not an expense account.", account=fee.display_name))

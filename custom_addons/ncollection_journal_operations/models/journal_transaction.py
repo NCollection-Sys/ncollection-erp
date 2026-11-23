@@ -151,7 +151,7 @@ misc AS (
 settle AS (
     SELECT st.settled_payment_id AS payment_id, SUM(st.liquidity) AS liquidity, SUM(st.liquidity_jc) AS liquidity_jc,
            BOOL_OR(st.approx) AS approx, MAX(st.date) AS bank_date, MIN(st.id) AS statement_line_id
-      FROM st JOIN pay ON pay.id = st.settled_payment_id
+      FROM st JOIN pay ON pay.id = st.settled_payment_id AND pay.journal_id = st.journal_id
      GROUP BY st.settled_payment_id
 ),
 rows AS (
@@ -172,7 +172,7 @@ rows AS (
            0, liquidity, liquidity_jc, approx, CASE WHEN is_reconciled THEN 'reconciled' ELSE 'to_reconcile' END,
            NULL, st.id, move_id
       FROM st
-     WHERE NOT EXISTS (SELECT 1 FROM pay WHERE pay.id = st.settled_payment_id)
+     WHERE NOT EXISTS (SELECT 1 FROM pay WHERE pay.id = st.settled_payment_id AND pay.journal_id = st.journal_id)
     UNION ALL
     SELECT misc.id * 10 + 3, journal_id, company_id, balance_currency_id, date, date, reference, description,
            'entry', CASE WHEN balance >= 0 THEN 'in' ELSE 'out' END, partner_id, NULL, NULL, currency_id,

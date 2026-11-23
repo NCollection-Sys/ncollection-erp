@@ -32,7 +32,15 @@ class NcollectionAccountReportReference(models.TransientModel):
         history before the period showed a balance that did not accumulate. One aggregate query for the period plus
         the opening helper's grouped queries; never a per-account loop."""
         self.ensure_one()
-        opening = self._nc_opening_balances()
+        fy_from = self.company_id.compute_fiscalyear_dates(self.date_from)['date_from']
+        fy_to = self.company_id.compute_fiscalyear_dates(self.date_to)['date_from']
+        if fy_from == fy_to:
+            opening = self._nc_opening_balances()
+        else:
+            # across fiscal years there is no single P&L reset date: every account carries all prior activity
+            opening = {account.id: balance for account, balance in self.env['account.move.line']._read_group(
+                self._nc_filter_domain() + [('date', '<', self.date_from)],
+                groupby=['account_id'], aggregates=['balance:sum']) if account}
         if self.account_ids:
             opening = {k: v for k, v in opening.items() if k in self.account_ids.ids}
         period = {}

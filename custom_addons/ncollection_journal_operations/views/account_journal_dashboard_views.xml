@@ -124,10 +124,10 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@id='action_card_statements']" position="after">
                 <div t-if="journal_type == 'bank' || journal_type == 'cash'">
-                    <a role="menuitem" type="object" name="action_nc_bank_batches" class="o_nc_menu_batches">Payment Batches</a>
+                    <a role="menuitem" type="object" name="action_nc_bank_batches" class="o_nc_menu_batches" groups="account.group_account_readonly">Payment Batches</a>
                 </div>
                 <div t-if="journal_type == 'bank' || journal_type == 'cash'">
-                    <a role="menuitem" type="object" name="action_nc_bank_duplicates" class="o_nc_menu_duplicates">Duplicate Review</a>
+                    <a role="menuitem" type="object" name="action_nc_bank_duplicates" class="o_nc_menu_duplicates" groups="account.group_account_readonly">Duplicate Review</a>
                 </div>
             </xpath>
             <xpath expr="//div[@name='bank_customer_payment']" position="before">

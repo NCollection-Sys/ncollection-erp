@@ -124,7 +124,9 @@ class TestDelegatedCompanyForms(TransactionCase):
         # a read-only field of the form is not writable either. On a database that already has journal items
         # Odoo's own currency guard (UserError) may refuse first; either way nothing changes.
         currency = self.parent.currency_id
-        with self.assertRaises(UserError):   # AccessError is a UserError
+        has_entries = 'account.move.line' in self.env and self.env['account.move.line'].search_count([], limit=1)
+        expected = UserError if has_entries else AccessError
+        with self.assertRaises(expected):
             self.parent.with_user(self.owner).write({'currency_id': self.env.ref('base.EUR').id})
         self.assertEqual(self.parent.currency_id, currency)
 

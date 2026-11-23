@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Request 07: discount before tax (945) or after tax (950) on 1,000 - 10 % with 5 % VAT; UI totals, journal entry,
 tax lines and receivable agree; posted invoices never change; only managers set the rule."""
+from unittest.mock import patch
+
 from odoo import Command
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import new_test_user, tagged
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
@@ -13,6 +15,9 @@ class TestCalculationRules(AccountTestInvoicingCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        # the after-tax cases model a company where the rule is allowed (not UAE, no UAE e-invoicing)
+        cls.startClassPatcher(patch.object(type(cls.env['res.company']), '_nc_after_tax_refused',
+                                           lambda self: ''))
         cls.vat5 = cls.env['account.tax'].create({'name': 'VAT 5 calc', 'amount': 5.0, 'type_tax_use': 'sale'})
         cls.discount = cls.env['ncollection.invoice.adjustment.type'].create({
             'name': 'Global 10', 'kind': 'discount', 'value_mode': 'percent',
@@ -78,3 +83,14 @@ class TestCalculationRules(AccountTestInvoicingCommon):
         clerk = new_test_user(self.env, login='calc_clerk', groups='account.group_account_invoice')
         with self.assertRaises(AccessError):
             self.env['ncollection.invoice.calculation.rules'].with_user(clerk).create({}).action_save()
+
+
+@tagged('post_install', '-at_install')
+class TestCalculationRulesUae(AccountTestInvoicingCommon):
+
+    def test_after_tax_is_refused_for_a_uae_company(self):
+        company = self.env.company
+        company.account_fiscal_country_id = self.env.ref('base.ae')
+        with self.assertRaises(ValidationError):
+            company.nc_discount_tax_timing = 'after_tax'
+        self.assertEqual(company.nc_discount_tax_timing, 'before_tax')

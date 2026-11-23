@@ -27,8 +27,11 @@ class IrActionsReport(models.Model):
         # a document's own page (per-document Print Settings), carried by its print context
         own = self.env.context.get('nc_print_paperformat_id')
         if own:
-            paper = self.env['report.paperformat'].sudo().browse(int(own)).exists()
-            if paper:
+            try:
+                paper = self.env['report.paperformat'].sudo().browse(int(own)).exists()
+            except (TypeError, ValueError):
+                paper = None
+            if paper and (paper.name or '').startswith('NCollection document '):
                 return paper
         chosen = self.env['ncollection.document.type']._nc_paperformat_for(self) if self else False
         if chosen:
