@@ -167,8 +167,10 @@ class AuditPolicy(models.Model):
         """Create the default policies that are missing. Idempotent (a second run creates nothing); never re-enables a
         policy an administrator switched off (it exists, so it is left alone); never a model OCA already audits."""
         IrModel = self.env['ir.model'].sudo()
-        oca = set(self.env['auditlog.rule'].sudo().with_context(active_test=False).search([]).mapped('model_id.model'))
-        existing = set(self.sudo().with_context(active_test=False).search([]).mapped('model'))
+        Rule = self.env['auditlog.rule'].sudo().with_context(active_test=False)
+        oca = set(Rule.search([('model_id', '!=', False)]).mapped('model_id.model'))
+        existing = set(self.sudo().with_context(active_test=False).search(
+            [('model_id', '!=', False)]).mapped('model'))
         created = self.browse()
         for name in DEFAULT_POLICY_MODELS:
             if name in existing or name in oca or name not in self.env or blocked(self.env, name):
