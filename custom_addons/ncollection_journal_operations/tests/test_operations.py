@@ -998,3 +998,13 @@ class TestTransferFeesAndExchange(JournalOpsCommon):
             transfer.action_post()
         self.assertEqual(self.env['account.move'].search_count([('line_ids.account_id', '=', self.fees.id),
                                                                 ('id', '=', transfer.fee_move_id.id)]), 1)
+
+
+@tagged('post_install', '-at_install')
+class TestTransactionPalette(JournalOpsCommon):
+
+    def test_bank_transactions_use_the_semantic_money_classes(self):
+        arch = self.env['ncollection.journal.transaction'].get_view(view_type='list')['arch']
+        self.assertIn('o_nc_fin_in', arch)
+        self.assertIn('o_nc_fin_out', arch)
+        self.assertNotIn('decoration-success="direction', arch, 'direction is no longer a whole-row colour')

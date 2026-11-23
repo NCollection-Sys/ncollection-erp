@@ -193,6 +193,17 @@ export class NcReportViewer extends Component {
         }
     }
 
+    /** Request 09.2: a ledger's Debit / Credit cells in the company's Financial Colours, from the report's own
+     *  perspective: on a receivable (or any non-payable) ledger a debit adds, on a supplier ledger a credit adds. */
+    finClass(col, row) {
+        if (!row || !row[col.key] || (col.key !== "debit" && col.key !== "credit")) {
+            return "";
+        }
+        const payable = this.state.values && this.state.values.partner_scope === "payable";
+        const adds = payable ? col.key === "credit" : col.key === "debit";
+        return adds ? "o_nc_fin_in" : "o_nc_fin_out";
+    }
+
     async apply() {
         await this.run(this.filtersFromValues(this.state.values));
     }

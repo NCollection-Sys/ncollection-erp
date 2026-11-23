@@ -1,0 +1,77 @@
+// Request 09.2: semantic money colours, ONE definition. Calm, readable on white and in dark mode (contrast >= 4.5:1).
+:root {
+    --nc-fin-in: #1f5fae;
+    --nc-fin-out: #b3261e;
+}
+:root[data-nc-fin-palette="green_red"] {
+    --nc-fin-in: #1e7a45;
+    --nc-fin-out: #b3261e;
+}
+:root[data-nc-fin-palette="blue_orange"] {
+    --nc-fin-in: #1f5fae;
+    --nc-fin-out: #a8520a;
+}
+:root[data-nc-fin-palette="neutral"] {
+    --nc-fin-in: inherit;
+    --nc-fin-out: inherit;
+}
+.o_nc_fin_in,
+td.o_nc_fin_in,
+.o_nc_fin_in .o_field_widget {
+    color: var(--nc-fin-in) !important;
+}
+.o_nc_fin_out,
+td.o_nc_fin_out,
+.o_nc_fin_out .o_field_widget {
+    color: var(--nc-fin-out) !important;
+}
+// a zero amount carries no direction
+td.o_nc_fin_in:has(.o_field_empty),
+td.o_nc_fin_out:has(.o_field_empty) {
+    color: inherit !important;
+}
+
+// ---- Request 17: the financial table language shared by bank transactions, partner lists and ledgers ----
+// Compact but readable rows, tabular figures right-aligned, labels never squeezed, money never truncated.
+.o_nc_transactions,
+.o_nc_fin_partners,
+.o_nc_alloc_list {
+    .o_list_table {
+        font-size: 0.9rem;
+
+        thead th {
+            font-size: 0.76rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: $text-muted;
+            white-space: nowrap;
+        }
+        tbody td {
+            padding-top: 0.45rem;
+            padding-bottom: 0.45rem;
+            vertical-align: middle;
+        }
+        td.o_list_number,
+        td.o_field_cell.o_monetary_cell,
+        td[name="amount_in"],
+        td[name="amount_out"],
+        td[name="pending_balance"],
+        td[name="running_balance"] {
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            text-overflow: clip;
+        }
+        td[name="running_balance"] {
+            font-weight: 600;
+        }
+        td[name="reference"],
+        td[name="complete_name"] {
+            min-width: 9rem;
+            font-weight: 500;
+        }
+        td[name="description"] {
+            max-width: 22rem;
+        }
+    }
+}

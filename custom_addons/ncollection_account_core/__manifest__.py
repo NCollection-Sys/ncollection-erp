@@ -38,6 +38,7 @@
         'views/account_move_partner_roles.xml',
         # Files / View / Edit, payment status, payment allocation + Print Receipt (models/account_payment.py).
         'views/payment_workflow_views.xml',
+        'views/financial_palette_views.xml',
         # Settings > Accounting Defaults: the default accounts Community already has, reachable by the Owner.
         'views/accounting_defaults_views.xml',
         'views/business_settings_views.xml',
@@ -59,6 +60,8 @@
             'ncollection_account_core/static/src/document_lines/document_lines.scss',
             'ncollection_account_core/static/src/document_lines/product_image.js',
             'ncollection_account_core/static/src/document_lines/product_image.xml',
+            'ncollection_account_core/static/src/fin_palette/fin_palette.scss',
+            'ncollection_account_core/static/src/fin_palette/fin_palette.js',
         ],
     },
     # Scaffold: the load-bearing deliverable is the shared AbstractModel mixin

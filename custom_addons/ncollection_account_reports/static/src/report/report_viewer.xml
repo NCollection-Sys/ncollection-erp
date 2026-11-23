@@ -186,7 +186,7 @@
                             </tr>
                             <tr t-elif="item.kind === 'line'" class="o_nc_rep__line">
                                 <t t-foreach="columns" t-as="col" t-key="col.key">
-                                    <td t-att-class="isMoney(col) ? 'is-num' : ''">
+                                    <td t-att-class="(isMoney(col) ? 'is-num ' : '') + finClass(col, item.row)">
                                         <t t-if="isMoney(col)">
                                             <span t-if="col.key === 'running_balance' or item.row[col.key]" t-att-class="isNegative(item.row[col.key]) ? 'is-neg' : ''" t-esc="amount(item.row[col.key], col)"/>
                                             <span t-else="" class="o_nc_rep__nil" aria-label="zero">—</span>
