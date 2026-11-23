@@ -86,16 +86,33 @@ _DIGEST_HEAD_FIELDS = (
 ACTIONS = {'create': 'create', 'write': 'update', 'unlink': 'delete'}
 
 
+def _peek(record, name, default=False):
+    """``record[name]`` ONLY when that needs no computation: a computed or related value that is not already in the
+    cache is not computed here. The capture can run while another module holds a throw-away cache (OCA auditlog
+    creating a sale order creates its picking): a value computed now would be lost with that cache and the next
+    flush would fail. Missing scope is acceptable; a broken business write is not."""
+    field = record._fields.get(name)
+    if field is None:
+        return default
+    if field.compute or field.related:
+        env = record.env
+        if record.id not in field._get_cache(env) or env.is_to_compute(field, record):
+            return default
+    return record[name]
+
+
 def _company_of(record):
     if record._name == 'res.company':
         return record.id
     field = record._fields.get('company_id')
     if field is not None and field.type == 'many2one' and field.comodel_name == 'res.company':
-        return record.company_id.id or False
+        company = _peek(record, 'company_id')
+        return company.id if company else False
     # several companies (e.g. account.account.company_ids): the event belongs to one only when the record does
     many = record._fields.get('company_ids')
     if many is not None and many.type == 'many2many' and many.comodel_name == 'res.company':
-        return record.company_ids.id if len(record.company_ids) == 1 else False
+        companies = _peek(record, 'company_ids') or record.env['res.company']
+        return companies.id if len(companies) == 1 else False
     return False
 
 
@@ -104,18 +121,18 @@ def _doc_type_of(record):
     name = record._name
     try:
         if name == 'account.move':
-            return 'account.move:%s' % (record.move_type or 'entry')
+            return 'account.move:%s' % (_peek(record, 'move_type') or 'entry')
         if name == 'account.payment':
-            return 'account.payment:%s' % (record.payment_type or 'inbound')
+            return 'account.payment:%s' % (_peek(record, 'payment_type') or 'inbound')
         if name == 'res.partner':
             fields_ = record._fields
-            if 'supplier_rank' in fields_ and record.supplier_rank and not record.customer_rank:
+            if 'supplier_rank' in fields_ and _peek(record, 'supplier_rank') and not _peek(record, 'customer_rank'):
                 return 'res.partner:supplier'
-            if 'customer_rank' in fields_ and record.customer_rank:
+            if 'customer_rank' in fields_ and _peek(record, 'customer_rank'):
                 return 'res.partner:customer'
             return 'res.partner:contact'
         if name == 'stock.picking' and 'picking_type_code' in record._fields:
-            return 'stock.picking:%s' % (record.picking_type_code or 'internal')
+            return 'stock.picking:%s' % (_peek(record, 'picking_type_code') or 'internal')
     except Exception:                                       # pragma: no cover
         return name
     return name
@@ -224,7 +241,7 @@ class AuditlogLog(models.Model):
             model = self.env['ir.model'].sudo().browse(model_id).model
             if not model or model not in self.env:
                 return False, model or False
-            record = self.env[model].sudo().with_context(active_test=False, prefetch_fields=False).browse(res_id)
+            record = self.env[model].sudo().browse(res_id)
             if not record.exists():
                 return False, model
             return _company_of(record), _doc_type_of(record)

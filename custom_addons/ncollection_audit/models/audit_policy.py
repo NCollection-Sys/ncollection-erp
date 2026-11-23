@@ -41,7 +41,7 @@ from odoo.exceptions import ValidationError
 from odoo.orm.identifiers import NewId
 
 from .audit_flags import capture_suppressed
-from .auditlog_log import _company_of, _doc_type_of
+from .auditlog_log import _company_of, _doc_type_of, _peek
 
 _logger = logging.getLogger(__name__)
 
@@ -217,7 +217,7 @@ def _value(record, field):
 def _text(env, field, value):
     """``*_value_text`` as OCA writes it: x2many as [(id, name)]."""
     if field.type in ('many2many',) and value:
-        comodel = env[field.comodel_name].sudo().with_context(active_test=False)
+        comodel = env[field.comodel_name].sudo()
         existing = comodel.browse(value).exists()
         return [(rec.id, rec.display_name) for rec in existing] + [
             (i, 'DELETED') for i in value if i not in existing.ids]
@@ -243,13 +243,23 @@ class Base(models.AbstractModel):
 
     def _ncal_snapshot(self, names, truthy_only=False):
         values = {}
-        # prefetch on for full snapshots (one SELECT for all columns), off for the few fields a write names
-        records = self.sudo().with_context(active_test=False) if truthy_only else self.sudo().with_context(
-            prefetch_fields=False, active_test=False)
+        # NO with_context here or below: OCA auditlog's ThrowAwayCache restores the cache only for environments that
+        # existed before it; an environment created inside it (a new context) keeps pointing at the thrown-away cache
+        # and corrupts the next flush ("Could not find all values of stock.picking to flush", measured).
+        records = self.sudo()
         for record in records:
             row = {}
             for name in names:
                 field = record._fields[name]
+                # a creation / deletion snapshot never READS a computed field: reading it triggers the recompute, and
+                # the pending result is lost when another module throws its cache away (OCA auditlog on sale.order
+                # creating a picking: "Could not find all values of stock.picking to flush", measured)
+                if truthy_only and field.compute and not field.inverse:
+                    continue
+                # and no snapshot ever computes: a computed / related value not already in the cache is skipped
+                if (field.compute or field.related) and (
+                        record.id not in field._get_cache(record.env) or record.env.is_to_compute(field, record)):
+                    continue
                 value = _value(record, field)
                 if truthy_only and value in (False, None, '', [], 0, 0.0) and field.type not in ('boolean',):
                     continue
@@ -260,6 +270,13 @@ class Base(models.AbstractModel):
         return values
 
     def _ncal_write_logs(self, method, old, new):
+        """Never lets the audit break the business operation: a failure loses this audit row, loudly."""
+        try:
+            self._ncal_write_logs_impl(method, old, new)
+        except Exception:
+            _logger.exception("ncollection_audit: could not record %s of %s %s", method, self._name, self.ids)
+
+    def _ncal_write_logs_impl(self, method, old, new):
         """Create the audit rows (same tables and format as OCA auditlog)."""
         env = self.env
         Log = env['auditlog.log'].sudo()
@@ -268,7 +285,7 @@ class Base(models.AbstractModel):
         request_id = env['auditlog.http.request'].sudo().current_http_request()
         session_id = env['auditlog.http.session'].sudo().current_http_session()
         vals_list = []
-        for record in self.sudo().with_context(active_test=False):
+        for record in self.sudo():
             before, after = old.get(record.id, {}), new.get(record.id, {})
             names = sorted(set(before) | set(after))
             lines = []
@@ -291,7 +308,7 @@ class Base(models.AbstractModel):
                 continue
             vals_list.append({
                 'model_id': model_id, 'res_id': record.id, 'method': method, 'user_id': env.uid,
-                'name': (record.display_name or '')[:64], 'log_type': 'full', 'line_ids': lines,
+                'name': _name_of(record), 'log_type': 'full', 'line_ids': lines,
                 'http_request_id': request_id, 'http_session_id': session_id, 'nc_source': 'native',
                 'nc_company_id': _company_of(record), 'nc_doc_type': _doc_type_of(record),
             })
@@ -299,8 +316,10 @@ class Base(models.AbstractModel):
             return
         # Isolated: a failure here (a value the column refuses, a broken hook) loses THIS audit row, loudly, and never
         # aborts the business write. The savepoint keeps the transaction usable after an SQL error.
+        # flush=False: this can run INSIDE another module's own ThrowAwayCache (OCA auditlog on sale.order); a flush
+        # there writes pending values whose cache that block then throws away (KeyError in _flush, measured).
         try:
-            with env.cr.savepoint():
+            with env.cr.savepoint(flush=False):
                 Log.create(vals_list)
         except Exception:
             _logger.exception("ncollection_audit: could not write the %s audit row(s) of %s %s", method, self._name,
@@ -364,3 +383,12 @@ def _nc_fields_cached(model, excluded):
     if key not in cache:
         cache[key] = frozenset(_recordable_fields(model, excluded))
     return cache[key]
+
+
+def _name_of(record):
+    """The record's name for the trail, without computing anything (see auditlog_log._peek)."""
+    for name in (record._rec_name, 'name'):
+        value = _peek(record, name) if name else False
+        if value and isinstance(value, str):
+            return value[:64]
+    return '#%s' % record.id
