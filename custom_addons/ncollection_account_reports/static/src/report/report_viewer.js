@@ -117,6 +117,11 @@ export class NcReportViewer extends Component {
         if (any) {
             return filters;
         }
+        // A drill from another report hands its run's filters over (e.g. Account Balances -> the account's ledger).
+        const preset = this.props.action.context && this.props.action.context.nc_report_filters;
+        if (preset && typeof preset === "object") {
+            return { ...preset };
+        }
         return LAST[this.model] ? { ...LAST[this.model] } : {};
     }
 

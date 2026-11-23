@@ -34,6 +34,9 @@ class NcollectionReportServiceDrill(models.AbstractModel):
         partner = self.env['res.partner'].browse(self._nc_int(partner_id)).exists() if partner_id else None
         if not account and not partner:                 # (a recordset of several accounts is a valid scope)
             raise UserError(self.env._("This row has no journal items to open."))
+        if hasattr(wizard, '_nc_drill_action') and account and len(account) == 1 and not partner:
+            account.check_access('read')
+            return wizard._nc_drill_action(account)
         return {
             'type': 'ir.actions.act_window',
             'name': self.env._("Journal Items — %s", str(label or '')[:120]),
