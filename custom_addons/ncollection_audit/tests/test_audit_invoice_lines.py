@@ -118,6 +118,10 @@ class TestAuditInvoiceLines(TransactionCase):
         # one moment per operation, as separate requests: each amount row a minute after its event
         base = fields.Datetime.now() - timedelta(hours=2)
         moments = {log.id: base + timedelta(minutes=10 * i) for i, log in enumerate(logs)}
+        # the invoice and the line created with it are ONE operation (one transaction time), as in real use
+        invoice_create = logs.filtered(lambda log: log.model_model == 'account.move' and log.method == 'create')
+        for log in logs.filtered(lambda log: log.model_model == 'account.move.line' and log.method == 'create'):
+            moments[log.id] = moments[invoice_create.id]
         for log in logs:
             self.env.cr.execute("UPDATE auditlog_log SET create_date = %s WHERE id = %s", (moments[log.id], log.id))
         own = [log for log in logs if log.model_model == 'account.move.line' and log.method == 'write']
@@ -238,3 +242,20 @@ class TestAuditInvoiceLines(TransactionCase):
         self.assertTrue(invoice.line_ids.filtered(lambda line: line.display_type == 'tax'),
                         "the invoice's derived tax line exists")
         self.assertEqual(len(self._line_logs(invoice, 'create')), 1, "only its product line is recorded")
+
+    def test_a_line_added_and_removed_later_does_not_exist_in_an_earlier_version(self):
+        invoice = self._invoice()
+        invoice.with_user(self.accountant).write({'ref': 'V2'})
+        invoice.with_user(self.accountant).write({'invoice_line_ids': [Command.create({
+            'product_id': self.product_b.id, 'name': 'Temporary', 'quantity': 1, 'price_unit': 40,
+            'account_id': self.income.id})]})
+        temporary = invoice.invoice_line_ids.filtered(lambda line: line.name == 'Temporary')
+        invoice.with_user(self.accountant).write({'invoice_line_ids': [Command.unlink(temporary.id)]})
+        logs = self.Service._nc_history_logs('account.move', invoice.id)
+        first = logs.filtered(lambda log: log.model_model == 'account.move' and log.method == 'create')
+        compare = self.Service.with_user(self.accountant).nc_audit_compare(
+            'account.move', invoice.id, first.id, logs[-1].id)
+        temp_rows = [r for r in compare['rows'] if r['field'].startswith('account.move.line:%s:' % temporary.id)]
+        self.assertTrue(temp_rows)
+        self.assertTrue(all(r['a_kind'] == 'empty' and r['b_kind'] == 'empty' for r in temp_rows),
+                        "absent before it was added and after it was removed")

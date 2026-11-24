@@ -406,6 +406,9 @@ class AuditService(models.AbstractModel):
                     return None, None, True
                 return line.new_value, line.new_value_text, True
         for log, lines in events[index + 1:]:
+            if (log.model_model, log.res_id) == key[:2] and log.nc_action == 'create':
+                # the record is created AFTER this version: at this version it did not exist (empty)
+                return None, None, True
             line = lines.get(key)
             if line is not None and log.nc_action != 'create':
                 return line.old_value, line.old_value_text, True
