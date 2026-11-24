@@ -153,6 +153,10 @@ PLATFORM_MODULES = frozenset({'ncollection_saas', 'ncollection_subscription', 'n
                               'ncollection_reseller'})
 SENSITIVE_MODELS = frozenset({
     'ncollection.auth.log',
+    # The Invoice Amount Audit is its OWN append-only, digested trail; copying each of its rows into this one showed
+    # every amount change twice (a misleading "Create Invoice Amount Audit" event). The History screen now reads it
+    # directly (audit_service.py), so its OCA rule is withdrawn; events already written are kept.
+    'ncollection.invoice.audit',
     # Authentication bookkeeping and the platform's one-time entry tickets: their rows are (hashes of) bearer tokens.
     'ncollection.auth.spent_token',
     'ncollection.platform.entry',

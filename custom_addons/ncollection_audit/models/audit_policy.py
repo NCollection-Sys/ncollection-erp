@@ -50,7 +50,7 @@ _logger = logging.getLogger(__name__)
 DEFAULT_POLICY_MODELS = (
     'res.partner', 'res.partner.bank', 'res.company', 'res.users',
     'product.template', 'product.category',
-    'account.move', 'account.payment', 'account.journal', 'account.account', 'account.tax',
+    'account.move', 'account.move.line', 'account.payment', 'account.journal', 'account.account', 'account.tax',
     'account.payment.term', 'account.analytic.account', 'account.asset',
     'purchase.order', 'stock.picking', 'stock.warehouse', 'stock.location',
     'hr.employee',
@@ -65,7 +65,8 @@ NOISY = {
     'account.move': {'sequence_prefix', 'sequence_number', 'invoice_partner_display_name', 'commercial_partner_id',
                      'payment_state', 'amount_residual', 'amount_residual_signed', 'amount_total_in_currency_signed',
                      'made_sequence_gap', 'secure_sequence_number', 'inalterable_hash', 'needed_terms_dirty',
-                     'tax_calculation_rounding_method', 'checked', 'is_move_sent', 'invoice_pdf_report_id'},
+                     'tax_calculation_rounding_method', 'checked', 'is_move_sent', 'invoice_pdf_report_id',
+                     'is_manually_modified'},
     'res.users': {'login_date', 'share', 'tz_offset', 'companies_count'},
     # customer_rank / supplier_rank are counters Odoo bumps when a document is posted for the partner: bookkeeping,
     # not a change a person made (and not something an Undo should ever put back).
@@ -194,8 +195,34 @@ class AuditPolicy(models.Model):
         return result
 
 
+# Models recorded by a WHITELIST instead of "every stored field": invoice lines carry dozens of derived columns
+# (balance, amount_currency, matching, sequence, ...) that Odoo rewrites on every recompute. Only what a person edits
+# on an invoice line is recorded; the resulting amounts stay with the Invoice Amount Audit (the authority for amounts).
+WHITELIST = {
+    'account.move.line': ('product_id', 'name', 'quantity', 'product_uom_id', 'price_unit', 'discount', 'tax_ids',
+                          'analytic_distribution'),
+}
+# The parent document whose history a record belongs to: an invoice line's events appear in its invoice's history.
+PARENT = {'account.move.line': 'move_id'}
+
+
+def _in_scope(record):
+    """Whether this record of a filtered model is recorded: only the PRODUCT lines of invoices / receipts (tax lines,
+    payment terms, rounding and journal-entry lines are derived by Odoo). Read without computing anything."""
+    if record._name != 'account.move.line':
+        return True
+    if _peek(record, 'display_type') != 'product':
+        return False
+    move = record.move_id            # a plain stored many2one: no compute
+    return bool(move) and _peek(move, 'move_type') in (
+        'out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
+
+
 def _recordable_fields(model, excluded):
     """Field names of ``model`` the native capture may record (see the module docstring for what never is)."""
+    if model._name in WHITELIST:
+        return [name for name in WHITELIST[model._name]
+                if name in model._fields and name not in excluded and not model._fields[name].groups]
     names = []
     for name, field in model._fields.items():
         if (name in MAGIC or name in excluded or name in NOISY.get(model._name, ())
@@ -256,7 +283,9 @@ class Base(models.AbstractModel):
                 # a creation / deletion snapshot never READS a computed field: reading it triggers the recompute, and
                 # the pending result is lost when another module throws its cache away (OCA auditlog on sale.order
                 # creating a picking: "Could not find all values of stock.picking to flush", measured)
-                if truthy_only and field.compute and not field.inverse:
+                # (an EDITABLE computed field - readonly=False, e.g. an invoice line's price - is the user's value once
+                # set, and it is in the cache after create: the peek below decides)
+                if truthy_only and field.compute and not field.inverse and field.readonly:
                     continue
                 # and no snapshot ever computes: a computed / related value not already in the cache is skipped
                 if (field.compute or field.related) and (
@@ -311,11 +340,15 @@ class Base(models.AbstractModel):
                 }))
             if method == 'write' and not lines:
                 continue
+            parent = record[PARENT[self._name]] if self._name in PARENT else None
             vals_list.append({
                 'model_id': model_id, 'res_id': record.id, 'method': method, 'user_id': env.uid,
                 'name': _name_of(record), 'log_type': 'full', 'line_ids': lines,
                 'nc_source': 'native',
-                'nc_company_id': _company_of(record), 'nc_doc_type': _doc_type_of(record),
+                'nc_company_id': _company_of(record) or (parent and _company_of(parent)) or False,
+                'nc_doc_type': _doc_type_of(record),
+                'nc_parent_model': parent._name if parent else False,
+                'nc_parent_res_id': parent.id if parent else False,
             })
         if not vals_list:
             return
@@ -344,6 +377,9 @@ class Base(models.AbstractModel):
     def create(self, vals_list):
         records = super().create(vals_list)
         names = records._ncal_policy('create') if records else None
+        if names and self._name in PARENT:
+            records = records.filtered(_in_scope)
+            names = names if records else None
         if names:
             try:
                 snapshot = records._ncal_snapshot(names, truthy_only=True)
@@ -359,6 +395,8 @@ class Base(models.AbstractModel):
             return super().write(vals)
         wanted = [name for name in vals if name in names]
         targets = self.filtered(lambda r: not isinstance(r.id, NewId))
+        if wanted and self._name in PARENT:
+            targets = targets.filtered(_in_scope)
         if not wanted or not targets:
             return super().write(vals)
         try:
@@ -381,12 +419,16 @@ class Base(models.AbstractModel):
         if names:
             # BEFORE the delete, like OCA: the pre-deletion values are what makes a restore possible, and a failed
             # delete rolls this row back with it.
+            targets = self.exists()
+            if self._name in PARENT:
+                targets = targets.filtered(_in_scope)
             try:
-                old = self.exists()._ncal_snapshot(names, truthy_only=True)
+                old = targets._ncal_snapshot(names, truthy_only=True)
             except Exception:
                 _logger.exception("ncollection_audit: could not snapshot %s before delete", self._name)
-                old = {record.id: {} for record in self}
-            self.exists()._ncal_write_logs('unlink', old, {})
+                old = {record.id: {} for record in targets}
+            if targets:
+                targets._ncal_write_logs('unlink', old, {})
         return super().unlink()
 
 
@@ -402,6 +444,11 @@ def _name_of(record):
     """The record's name for the trail, without computing anything (see auditlog_log._peek)."""
     for name in (record._rec_name, 'name'):
         value = _peek(record, name) if name else False
-        if value and isinstance(value, str):
+        if value and isinstance(value, str) and value != '/':
             return value[:64]
+    # an invoice line without a readable label: its product (a plain stored link), else its number on the invoice
+    product = record._fields.get('product_id') and _peek(record, 'product_id')
+    if product:
+        product = product.sudo()            # default_code and the template name are plain stored columns
+        return (product.default_code or product.product_tmpl_id.name or '#%s' % record.id)[:64]
     return '#%s' % record.id

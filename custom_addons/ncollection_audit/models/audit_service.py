@@ -63,7 +63,10 @@ class AuditService(models.AbstractModel):
 
     @api.model
     def _nc_base_domain(self):
-        return [('model_id', 'in', self._nc_readable_model_ids()), ('method', 'in', ('create', 'write', 'unlink'))]
+        # the copies of Invoice Amount Audit rows that the OCA rule wrote before 19.0.2.1.0 stay in the table (history
+        # is never deleted) but are not shown: the screen reads that audit directly, and listing both was a duplicate
+        return [('model_id', 'in', self._nc_readable_model_ids()), ('method', 'in', ('create', 'write', 'unlink')),
+                ('model_model', '!=', 'ncollection.invoice.audit')]
 
     @api.model
     def _nc_log(self, log_id):
@@ -303,12 +306,16 @@ class AuditService(models.AbstractModel):
                 undo.create_date), 'log_ids': undo.result_log_ids.ids} if undo else False,
             'undo_of': {'id': log.nc_undo_id.original_log_ref} if log.nc_undo_id else False,
             'can_undo': self.env.user.has_group('ncollection_audit.group_audit_undo'),
+            # where this event's Record History and Compare Versions live: an invoice line's are its invoice's
+            'history_model': log.nc_parent_model or log.model_model,
+            'history_res_id': log.nc_parent_res_id or log.res_id,
         }
 
     # ---- record history & versions ---------------------------------------
 
     @api.model
     def _nc_history_logs(self, model, res_id):
+        """The visible events of one document AND of its children (an invoice's line events), oldest first."""
         self._nc_check_reader()
         if (not isinstance(model, str) or len(model) > 128 or isinstance(res_id, bool)
                 or not isinstance(res_id, int)):
@@ -318,15 +325,38 @@ class AuditService(models.AbstractModel):
             if record.sudo().exists() and not record.has_access('read'):
                 raise AccessError(self.env._("You are not allowed to see this document's history."))
         return self.env['auditlog.log'].search(
-            self._nc_base_domain() + [('model_model', '=', model), ('res_id', '=', res_id)],
+            self._nc_base_domain() + ['|', '&', ('model_model', '=', model), ('res_id', '=', res_id),
+                                      '&', ('nc_parent_model', '=', model), ('nc_parent_res_id', '=', res_id)],
             order='create_date asc, id asc', limit=MAX_HISTORY)
+
+    @api.model
+    def _nc_amount_rows(self, model, res_id):
+        """The Invoice Amount Audit rows of an invoice, oldest first (that audit is the AUTHORITY for amounts: they are
+        read here, never copied). Callers have already checked the reader may see this invoice's history."""
+        if model != 'account.move' or 'ncollection.invoice.audit' not in self.env:
+            return self.env['auditlog.log'].browse()
+        return self.env['ncollection.invoice.audit'].sudo().search([('res_id', '=', res_id)],
+                                                                   order='logged_at asc, id asc')
+
+    @api.model
+    def _nc_amount_entry(self, row):
+        currency = row.currency_id or self.env.company.currency_id
+        money = lambda value: V.formatLang(self.env, value, currency_obj=currency)  # noqa: E731
+        return {
+            'id': row.id, 'date': fields.Datetime.to_string(row.logged_at), 'user': row.user_id.sudo().name or '',
+            'event': dict(row._fields['event']._description_selection(self.env)).get(row.event, row.event),
+            'untaxed': [money(row.old_amount_untaxed), money(row.new_amount_untaxed)],
+            'tax': [money(row.old_amount_tax), money(row.new_amount_tax)],
+            'total': [money(row.old_amount_total), money(row.new_amount_total)],
+        }
 
     @api.model
     def nc_audit_history(self, model, res_id):
         logs = self._nc_history_logs(model, res_id)
         undone = set(self.env['ncollection.audit.undo'].sudo().search(
             [('original_log_ref', 'in', logs.ids)]).mapped('original_log_ref'))
-        first = logs[:1]
+        own = logs.filtered(lambda log: log.model_model == model and log.res_id == res_id)
+        first = own[:1]
         exists = model in self.env and bool(self.env[model].sudo().browse(res_id).exists())
         versions = []
         for number, log in enumerate(logs, start=1):
@@ -334,98 +364,150 @@ class AuditService(models.AbstractModel):
             row['version'] = number
             row['fields'] = [V.label(self.env, log.model_model, line.field_name, line.field_description)
                              for line in log.line_ids]
+            row['child'] = bool(log.nc_parent_model)
             versions.append(row)
         return {
             'model': model, 'res_id': res_id, 'exists': exists,
-            'document': (logs[-1:].name or first.name or '#%s' % res_id) if logs else '#%s' % res_id,
-            'type': V.doc_label(self.env, (logs[-1:].nc_doc_type or model) if logs else model),
+            'document': (own[-1:].name or first.name or '#%s' % res_id) if own else '#%s' % res_id,
+            'type': V.doc_label(self.env, (own[-1:].nc_doc_type or model) if own else model),
             'complete': bool(first) and first.nc_action == 'create',
             'truncated': len(logs) >= MAX_HISTORY,
             'versions': versions,
+            # the Invoice Amount Audit, shown in the same timeline (its own timestamps: the application clock at the
+            # moment of the change; audit events carry their transaction's start time)
+            'amounts': [self._nc_amount_entry(row) for row in self._nc_amount_rows(model, res_id)],
         }
 
     @api.model
-    def _nc_state_after(self, events, index, name):
-        """The value of field ``name`` right after event ``index`` (0-based), as (raw, raw_text, known).
+    def _nc_state_after(self, events, index, key, first_action):
+        """The value of ``key`` = (model, record id, field) right after event ``index`` (0-based), as
+        (raw, raw_text, known).
 
-        Exact from what was recorded: the last event at or before ``index`` that recorded the field gives its NEW
-        value; failing that, the first LATER event that recorded it gives its OLD value (the value it had all along).
-        A field recorded by neither is unknown - unless the history starts with a full creation record, which states
-        every non-empty value, so a field it does not list was empty."""
+        Exact from what was recorded: the last event at or before ``index`` that recorded it gives its NEW value (a
+        deletion: the record is gone, so it is empty); failing that, the first LATER event that recorded it gives its
+        OLD value (the value it had all along). Recorded by neither: empty when that record's history starts with its
+        creation (a creation states every non-empty value, and before it the record did not exist), else unknown."""
         for log, lines in reversed(events[:index + 1]):
-            line = lines.get(name)
+            line = lines.get(key)
             if line is not None:
                 if log.nc_action == 'delete':
-                    return line.old_value, line.old_value_text, True
+                    return None, None, True
                 return line.new_value, line.new_value_text, True
         for log, lines in events[index + 1:]:
-            line = lines.get(name)
+            line = lines.get(key)
             if line is not None and log.nc_action != 'create':
                 return line.old_value, line.old_value_text, True
-        if events and events[0][0].nc_action == 'create':
+        if first_action.get(key[:2]) == 'create':
             return None, None, True
         return None, None, False
 
     @api.model
+    def _nc_amount_at(self, amounts, cutoff, name):
+        """An invoice amount as the Invoice Amount Audit recorded it at the end of a version: the NEW value of the
+        last row before ``cutoff`` (the start of the next recorded event), else the OLD value of the first row."""
+        before = amounts.filtered(lambda row: cutoff is None or row.logged_at < cutoff)
+        if before:
+            return before[-1]['new_' + name], True
+        if amounts:
+            return amounts[0]['old_' + name], True
+        return None, False
+
+    @api.model
     def nc_audit_compare(self, model, res_id, log_a, log_b):
-        """Version A vs version B of one document, from recorded history only (never guessed)."""
+        """Version A vs version B of one document (its own fields, its lines, and for an invoice its amounts from the
+        Invoice Amount Audit), from recorded history only (never guessed)."""
         logs = self._nc_history_logs(model, res_id)
         ids = logs.ids
         if log_a not in ids or log_b not in ids:
             raise AccessError(self.env._("These versions are not part of this document's visible history."))
         ia, ib = sorted((ids.index(log_a), ids.index(log_b)))
-        events = [(log, {line.field_name: line for line in log.line_ids}) for log in logs]
-        names = []
-        for _log, lines in events:
-            for name in lines:
-                if name not in names:
-                    names.append(name)
+        events = [(log, {(log.model_model, log.res_id, line.field_name): line for line in log.line_ids})
+                  for log in logs]
+        keys, first_action, line_names = [], {}, {}
+        for log, lines in events:
+            first_action.setdefault((log.model_model, log.res_id), log.nc_action)
+            if log.nc_parent_model:
+                line_names[(log.model_model, log.res_id)] = log.name or '#%s' % log.res_id
+            for key in lines:
+                if key not in keys:
+                    keys.append(key)
         Model = self.env[model] if model in self.env else None
         record = Model.with_context(active_test=False).browse(res_id).sudo().exists() if Model is not None else None
         currency = V.currency_of(record) if record else self.env.company.currency_id
         gaps, rows = [], []
-        for name in names:
-            field = Model._fields.get(name) if Model is not None else None
+
+        def status_of(field, ra, rb, ka, kb, kind_a, kind_b):
+            if not ka or not kb:
+                return 'unknown'
+            if kind_a == 'empty' and kind_b != 'empty':
+                return 'added'
+            if kind_a != 'empty' and kind_b == 'empty':
+                return 'removed'
+            try:
+                return 'unchanged' if V.same(field, V.parse(field, ra), V.parse(field, rb)) else 'changed'
+            except (ValueError, SyntaxError):
+                return 'unchanged' if (ra or '') == (rb or '') else 'changed'
+
+        for key in keys:
+            key_model, key_id, name = key
+            owner = self.env[key_model] if key_model in self.env else None
+            field = owner._fields.get(name) if owner is not None else None
             if field is None:
                 continue
-            ra, ta, ka = self._nc_state_after(events, ia, name)
-            rb, tb, kb = self._nc_state_after(events, ib, name)
-            da, kind_a = V.display(self.env, model, field, ra, ta, currency) if ka else (
+            ra, ta, ka = self._nc_state_after(events, ia, key, first_action)
+            rb, tb, kb = self._nc_state_after(events, ib, key, first_action)
+            da, kind_a = V.display(self.env, key_model, field, ra, ta, currency) if ka else (
                 self.env._("Not recorded"), 'unknown')
-            db, kind_b = V.display(self.env, model, field, rb, tb, currency) if kb else (
+            db, kind_b = V.display(self.env, key_model, field, rb, tb, currency) if kb else (
                 self.env._("Not recorded"), 'unknown')
-            if not ka or not kb:
-                status = 'unknown'
-            elif kind_a == 'empty' and kind_b != 'empty':
-                status = 'added'
-            elif kind_a != 'empty' and kind_b == 'empty':
-                status = 'removed'
-            else:
-                try:
-                    status = 'unchanged' if V.same(field, V.parse(field, ra), V.parse(field, rb)) else 'changed'
-                except (ValueError, SyntaxError):
-                    status = 'unchanged' if (ra or '') == (rb or '') else 'changed'
-            rows.append({'field': name, 'label': V.label(self.env, model, name, field.string), 'a': da, 'b': db,
-                         'status': status,
-                         'a_kind': kind_a, 'b_kind': kind_b})
+            label = V.label(self.env, key_model, name, field.string)
+            line = line_names.get((key_model, key_id))
+            if line:
+                label = self.env._("Line %(line)s · %(field)s", line=line, field=label)
+            own_field = (key_model, key_id) == (model, res_id)
+            rows.append({'field': name if own_field else '%s:%s:%s' % key, 'label': label, 'a': da, 'b': db,
+                         'status': status_of(field, ra, rb, ka, kb, kind_a, kind_b),
+                         'a_kind': kind_a, 'b_kind': kind_b, 'line': bool(line)})
+        # AMOUNTS from the Invoice Amount Audit (the authority), at the end of each version
+        amounts = self._nc_amount_rows(model, res_id)
+        if amounts:
+            cut_a = logs[ia + 1].create_date if ia + 1 < len(logs) else None
+            cut_b = logs[ib + 1].create_date if ib + 1 < len(logs) else None
+            amount_field = self.env['ncollection.invoice.audit']._fields['new_amount_total']
+            for name, label in (('amount_untaxed', self.env._("Untaxed Amount")),
+                                ('amount_tax', self.env._("Tax Amount")),
+                                ('amount_total', self.env._("Total Amount"))):
+                va, ka = self._nc_amount_at(amounts, cut_a, name)
+                vb, kb = self._nc_amount_at(amounts, cut_b, name)
+                (da, kind_a), (db, kind_b) = (
+                    (V.formatLang(self.env, value, currency_obj=currency), 'value') if known
+                    else (self.env._("Not recorded"), 'unknown')
+                    for value, known in ((va, ka), (vb, kb)))
+                status = 'unknown' if not (ka and kb) else (
+                    'unchanged' if V.same(amount_field, va, vb) else 'changed')
+                rows.append({'field': name, 'label': label, 'a': da, 'b': db, 'status': status,
+                             'a_kind': kind_a, 'b_kind': kind_b, 'amount': True})
         # GAP DETECTION: an event whose recorded OLD value is not the previous event's NEW value means something
         # changed the field without being recorded (auditing switched off, a raw SQL write, a legacy period).
         last = {}
         for log, lines in events:
-            for name, line in lines.items():
-                field = Model._fields.get(name) if Model is not None else None
+            for key, line in lines.items():
+                owner = self.env[key[0]] if key[0] in self.env else None
+                field = owner._fields.get(key[2]) if owner is not None else None
                 if field is None:
                     continue
-                if name in last and log.nc_action == 'update':
+                if key in last and log.nc_action == 'update':
                     try:
-                        if not V.same(field, V.parse(field, last[name]), V.parse(field, line.old_value)):
-                            gaps.append({'field': V.label(self.env, model, name, field.string), 'event': log.id})
+                        if not V.same(field, V.parse(field, last[key]), V.parse(field, line.old_value)):
+                            gaps.append({'field': V.label(self.env, key[0], key[2], field.string), 'event': log.id})
                     except (ValueError, SyntaxError):
                         # a value that cannot be read back is not evidence of a gap either way
-                        _logger.debug("audit compare: unreadable value of %s on event %s", name, log.id)
-                last[name] = line.new_value if log.nc_action != 'delete' else line.old_value
-        rows.sort(key=lambda r: ({'changed': 0, 'added': 1, 'removed': 2, 'unknown': 3, 'unchanged': 4}[r['status']],
+                        _logger.debug("audit compare: unreadable value of %s on event %s", key, log.id)
+                last[key] = line.new_value if log.nc_action != 'delete' else line.old_value
+        order = {'changed': 0, 'added': 1, 'removed': 2, 'unknown': 3, 'unchanged': 4}
+        rows.sort(key=lambda r: (0 if r.get('amount') else 1, order[r['status']], r.get('line', False),
                                  (r['label'] or '').lower()))
+        own_first = first_action.get((model, res_id))
         return {
             'a': {'id': logs[ia].id, 'version': ia + 1, 'date': fields.Datetime.to_string(logs[ia].create_date),
                   'action': logs[ia].nc_action, 'user': logs[ia].user_id.sudo().name or ''},
@@ -434,7 +516,7 @@ class AuditService(models.AbstractModel):
             'rows': rows,
             'summary': {status: sum(1 for r in rows if r['status'] == status)
                         for status in ('changed', 'added', 'removed', 'unchanged', 'unknown')},
-            'complete': events[0][0].nc_action == 'create',
+            'complete': own_first == 'create',
             'gaps': gaps,
         }
 
@@ -445,6 +527,10 @@ class AuditService(models.AbstractModel):
         """An action opening the document of an event, only when it exists and the user may read it."""
         log = self._nc_log(log_id)
         record, readable = self._nc_document(log)
+        if log.nc_parent_model and log.nc_parent_model in self.env:
+            record = self.env[log.nc_parent_model].browse(log.nc_parent_res_id)       # a line opens its invoice
+            readable = bool(record.sudo().exists()) and record.has_access('read')
+            record = record if readable else None
         if record is None or not readable:
             raise UserError(self.env._("This document no longer exists or you cannot open it."))
         return {'type': 'ir.actions.act_window', 'res_model': record._name, 'res_id': record.id,

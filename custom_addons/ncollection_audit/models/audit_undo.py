@@ -44,7 +44,7 @@ from .audit_flags import suppress_capture, undo_scope
 _logger = logging.getLogger(__name__)
 
 PROTECTED = {
-    'account.move.line', 'account.partial.reconcile', 'account.full.reconcile', 'account.bank.statement',
+    'account.partial.reconcile', 'account.full.reconcile', 'account.bank.statement',
     'account.bank.statement.line', 'account.tax', 'account.tax.repartition.line', 'account.asset',
     'account.asset.line', 'account.analytic.line', 'ncollection.internal.transfer', 'ncollection.invoice.audit',
     'ncollection.invoice.adjustment', 'ncollection.cheque.print.job', 'ncollection.cheque.print.event',
@@ -77,7 +77,8 @@ DATE_FIELDS = ('date', 'invoice_date', 'accounting_date')
 def _hint(env, model):
     hints = {
         'account.move': env._("Use the document's own Reset to Draft, Credit Note or Reverse Entry."),
-        'account.move.line': env._("Journal items change only through their entry (Reset to Draft, Reverse)."),
+        'account.move.line': env._("Edit the line on the draft invoice; a posted invoice is corrected with a credit "
+                                   "note."),
         'account.payment': env._("Use the payment's own Reset to Draft / Cancel, and Unreconcile it in Accounting."),
         'account.partial.reconcile': env._("Use Unreconcile in Bank Transactions & Matching."),
         'account.full.reconcile': env._("Use Unreconcile in Bank Transactions & Matching."),
@@ -186,6 +187,15 @@ class AuditUndo(models.Model):
             return env._("Undo is not available for this document type.")
         if name in DRAFT_ONLY and log.nc_action == 'delete':
             return env._("A deleted accounting document is never recreated from the trail.")
+        if name == 'account.move.line':
+            # Only invoice product lines are recorded (with their invoice as parent); a journal item of any other kind
+            # is never touched, and a deleted line is never re-added: taxes, accounts and totals are the invoice's
+            # own computation, so a line is added again on the draft invoice itself.
+            if log.nc_parent_model != 'account.move':
+                return env._("Undo is not available for this document type.")
+            if log.nc_action == 'delete':
+                return env._("A deleted invoice line is never re-added from the trail: add it again on the draft "
+                             "invoice.")
         return None
 
     @api.model
@@ -211,7 +221,7 @@ class AuditUndo(models.Model):
             return env._("Restricted field: it is never restored from the trail.")
         if not field.store or field.type not in V.SUPPORTED:
             return env._("This kind of field cannot be restored.")
-        if field.compute and not field.inverse:
+        if field.compute and not field.inverse and field.readonly:
             return env._("Computed by the system.")
         if field.readonly and not (field.compute and field.inverse):
             return env._("Set by the system (read-only).")
@@ -251,7 +261,8 @@ class AuditUndo(models.Model):
                 return self._nc_refuse(env._("The document no longer exists."))
             if not record.has_access('write' if log.nc_action == 'update' else 'unlink'):
                 return self._nc_refuse(env._("You are not allowed to change this document."))
-            locked = self._nc_locked(record)
+            # an invoice line follows its invoice: only while the invoice is a draft and not in a locked period
+            locked = self._nc_locked(record.sudo().move_id if model._name == 'account.move.line' else record)
             if locked:
                 return self._nc_refuse(locked, _hint(env, model._name))
         currency = V.currency_of(record.sudo()) if exists else env.company.currency_id

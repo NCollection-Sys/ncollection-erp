@@ -400,11 +400,31 @@
         </div>
         <p t-if="!h.versions.length" class="nc-au-muted">No recorded events for this document.</p>
         <ol class="nc-au-tl">
-            <li t-foreach="h.versions.slice().reverse()" t-as="v" t-key="v.id" t-attf-class="nc-au-tl-item nc-au-tl-{{v.action}}">
+            <t t-foreach="timelineItems" t-as="item" t-key="item.key">
+            <li t-if="item.kind === 'amount'" class="nc-au-tl-item nc-au-tl-amount">
+                <span class="nc-au-tl-dot" aria-hidden="true"/>
+                <div class="nc-au-tl-body">
+                    <div class="nc-au-tl-top">
+                        <b>Amounts</b>
+                        <span class="nc-au-flag nc-au-flag-source">Invoice Amount Audit</span>
+                        <span class="nc-au-ts" t-esc="fmtDate(item.a.date)"/>
+                        <span class="nc-au-user"><i class="fa fa-user-o" aria-hidden="true"/> <t t-esc="item.a.user"/></span>
+                        <span class="nc-au-muted" t-esc="item.a.event"/>
+                    </div>
+                    <div class="nc-au-tl-desc nc-au-amounts">
+                        <span>Untaxed <t t-esc="item.a.untaxed[0]"/> → <b t-esc="item.a.untaxed[1]"/></span>
+                        <span>Tax <t t-esc="item.a.tax[0]"/> → <b t-esc="item.a.tax[1]"/></span>
+                        <span>Total <t t-esc="item.a.total[0]"/> → <b t-esc="item.a.total[1]"/></span>
+                    </div>
+                </div>
+            </li>
+            <li t-else="" t-attf-class="nc-au-tl-item nc-au-tl-{{item.v.action}}">
+                <t t-set="v" t-value="item.v"/>
                 <span class="nc-au-tl-dot" aria-hidden="true"/>
                 <div class="nc-au-tl-body">
                     <div class="nc-au-tl-top">
                         <b>Version <t t-esc="v.version"/></b>
+                        <span t-if="v.child" class="nc-au-flag nc-au-flag-source"><t t-esc="v.type"/>: <t t-esc="v.document"/></span>
                         <t t-call="ncollection_audit.ActionBadge"><t t-set="action" t-value="v.action"/><t t-set="label" t-value="actionLabel(v.action)"/></t>
                         <span class="nc-au-ts" t-esc="fmtDate(v.date)"/>
                         <span class="nc-au-user"><i class="fa fa-user-o" aria-hidden="true"/> <t t-esc="v.user"/></span>
@@ -419,6 +439,7 @@
                     </div>
                 </div>
             </li>
+            </t>
         </ol>
         <div t-if="h.truncated" class="nc-au-muted">Only the first 1,000 events are shown.</div>
         <t t-if="state.view === 'history' and state.compare"><t t-call="ncollection_audit.Compare"/></t>

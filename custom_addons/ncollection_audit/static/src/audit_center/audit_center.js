@@ -280,7 +280,7 @@ export class NcAuditCenter extends Component {
         const event = this.state.event;
         if ((tab === "history" || tab === "compare") && !this.state.history && event) {
             this.state.history = await this.orm.call("ncollection.audit.service", "nc_audit_history",
-                [event.model, event.res_id]);
+                [event.history_model || event.model, event.history_res_id || event.res_id]);
             this.defaultCompare();
         }
         if (tab === "compare" && !this.state.compare) {
@@ -341,6 +341,19 @@ export class NcAuditCenter extends Component {
         if (this.state.view === "event") {
             this.state.tab = "compare";
         }
+    }
+    get timelineItems() {
+        // recorded events and the Invoice Amount Audit rows of the same document, newest first (each with its own
+        // timestamp; within one second, events before amounts)
+        const h = this.state.history;
+        if (!h) {
+            return [];
+        }
+        const items = h.versions.map((v) => ({ key: "e" + v.id, kind: "event", date: v.date, v }));
+        for (const a of h.amounts || []) {
+            items.push({ key: "a" + a.id, kind: "amount", date: a.date, a });
+        }
+        return items.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : (x.kind === y.kind ? 0 : x.kind === "amount" ? -1 : 1)));
     }
     get compareRows() {
         const rows = this.state.compare?.rows || [];

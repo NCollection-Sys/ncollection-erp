@@ -157,6 +157,9 @@ class AuditlogLog(models.Model):
     nc_doc_type = fields.Char(string='Document Type Key', readonly=True, index=True)
     nc_source = fields.Selection([('oca', 'Rule'), ('native', 'Policy')], string='Recorded By', readonly=True,
                                  default='oca')
+    # the document whose history this event belongs to (an invoice line's events -> its invoice)
+    nc_parent_model = fields.Char(string='Parent Document Model', readonly=True)
+    nc_parent_res_id = fields.Integer(string='Parent Document ID', readonly=True)
     nc_undo_id = fields.Many2one('ncollection.audit.undo', string='Written by Undo', readonly=True, index=True,
                                  ondelete='restrict')
     nc_content_hash = fields.Char(
@@ -230,6 +233,8 @@ class AuditlogLog(models.Model):
             CREATE INDEX IF NOT EXISTS auditlog_log_nc_record_idx
                 ON auditlog_log (model_model, res_id, create_date, id);
             CREATE INDEX IF NOT EXISTS auditlog_log_nc_model_idx ON auditlog_log (model_id);
+            CREATE INDEX IF NOT EXISTS auditlog_log_nc_parent_idx ON auditlog_log (nc_parent_model, nc_parent_res_id)
+                WHERE nc_parent_model IS NOT NULL;
         """)
 
     @api.model

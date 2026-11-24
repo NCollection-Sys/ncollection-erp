@@ -40,6 +40,7 @@ DOC_LABELS = {
     'account.move:in_receipt': _lt("Purchase Receipt"),
     'account.move:entry': _lt("Journal Entry"),
     'account.move': _lt("Journal Entry"),
+    'account.move.line': _lt("Invoice Line"),
     'account.payment:inbound': _lt("Receipt"),
     'account.payment:outbound': _lt("Payment"),
     'account.payment': _lt("Payment"),
@@ -201,6 +202,8 @@ def display(env, model, field, raw, raw_text=None, currency=None):
         if kind == 'datetime':
             value = parse(field, raw)
             return format_datetime(env, value, tz=env.user.tz or 'UTC', dt_format='medium'), 'value'
+        if kind == 'json' and field.name == 'analytic_distribution':
+            return _analytic_text(env, raw), 'value'
         if kind == 'html':
             from odoo.tools import html2plaintext
             return html2plaintext(raw)[:MAX_TEXT], 'value'
@@ -246,3 +249,21 @@ def label(env, model, name, fallback=''):
         if field:
             return field.field_description or fallback or name
     return fallback or name or ''
+
+
+def _analytic_text(env, raw):
+    """An analytic distribution ({"<account ids>": percent}) as "Centre A 60%, Centre B 40%"; ids of accounts that no
+    longer exist are shown as such."""
+    value = ast.literal_eval(raw) if isinstance(raw, str) else raw
+    if not isinstance(value, dict):
+        return str(raw)
+    Account = env['account.analytic.account'].sudo() if 'account.analytic.account' in env else None
+    parts = []
+    for key, percent in value.items():
+        names = []
+        for ident in str(key).split(','):
+            ident = ident.strip()
+            record = Account.browse(int(ident)).exists() if Account is not None and ident.isdigit() else None
+            names.append(record.display_name if record else env._("#%(id)s (deleted)", id=ident))
+        parts.append('%s %s%%' % (' + '.join(names), formatLang(env, float(percent), digits=2)))
+    return ', '.join(parts)

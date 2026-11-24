@@ -185,3 +185,32 @@ Timestamps, users, values and digests are untouched. The new indexes are (create
 | Accounting H1 (HIGH) | Odoo 19 payment states (`in_process`, `canceled`, `rejected`) were not final → a posted payment's amount was restorable | Invoices and payments are restored only while draft, and only while their entry is a draft. The states are added. Test added. |
 | Accounting M1 / M2 / M3 / M4 / M5 | Locks; lock dates restorable; master data reclassification; archive fallback; per-company fields | All lock dates are checked. Lock / fiscal / chart / currency fields, account type and journal type / account are never restored. A referenced accounting master record is never archived. Per-company fields are refused. |
 | UI/UX | Tablet columns; untranslated labels; blank restore value; ARIA; contrast; row click; version headers | All HIGH and the listed MEDIUM items are fixed. |
+
+## 6. Invoice coverage (19.0.2.1.0, LOCAL — see AUDIT_LOG_INVOICE_COVERAGE.md for the investigation)
+
+**Invoice lines, field by field**
+- Lines are recorded natively: `account.move.line`, invoice and receipt **product** lines only.
+- Recorded fields: product, description, quantity, unit, unit price, discount, taxes, analytic distribution.
+- Lines added and removed are recorded too (pre-removal values kept).
+- Each line event carries its invoice (`nc_parent_model` / `nc_parent_res_id`), so it appears in the invoice's Record
+  History, opens the invoice, and shares its access rules.
+- Tax lines, payment-term lines and journal-entry lines are derived by Odoo and are never recorded.
+
+**Amounts**
+- The Invoice Amount Audit stays the **authority** for amounts. Its rows are READ into the invoice timeline and into
+  Compare Versions (Untaxed / Tax / Total at the end of each version), never copied.
+- Its OCA copy rule is withdrawn, so each amount change is no longer shown twice. Old copies stay in the table and are
+  only hidden from the History list.
+
+**Timestamps and noise**
+- Each source keeps its own true timestamp: audit events carry their transaction's start, amount rows the moment of
+  the change.
+- A version's amounts are the last amount recorded before the next audit event begins. Nothing historical is
+  rewritten.
+- `is_manually_modified` is no longer recorded.
+
+**Undo of lines**
+- Allowed only while the invoice is a draft and outside locked periods: restore fields, or remove a line that was
+  added.
+- A removed line is never re-added.
+- A posted, paid, reconciled or locked invoice is refused, with a pointer to the credit-note workflow.

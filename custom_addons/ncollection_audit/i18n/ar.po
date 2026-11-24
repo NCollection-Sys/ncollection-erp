@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 14:52+0000\n"
-"PO-Revision-Date: 2026-11-23 14:52+0000\n"
+"POT-Creation-Date: 2026-11-24 06:37+0000\n"
+"PO-Revision-Date: 2026-11-24 06:37+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -62,6 +62,12 @@ msgstr "(غير نشط)"
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "A deleted accounting document is never recreated from the trail."
 msgstr "المستند المحاسبي المحذوف لا يُعاد إنشاؤه من السجل أبدًا."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "A deleted invoice line is never re-added from the trail: add it again on the draft invoice."
+msgstr "لا يُعاد إضافة سطر فاتورة محذوف من السجل: أضفه مجددًا على الفاتورة في حالة المسودة."
 
 #. module: ncollection_audit
 #: model:ir.model.constraint,message:ncollection_audit.constraint_ncollection_audit_policy_model_unique
@@ -149,6 +155,12 @@ msgstr "جميع الأنواع"
 #: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "All users"
 msgstr "جميع المستخدمين"
+
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Amounts"
+msgstr "المبالغ"
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -614,6 +626,12 @@ msgstr "تم"
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "Edit the line on the draft invoice; a posted invoice is corrected with a credit note."
+msgstr "عدّل السطر على الفاتورة في حالة المسودة؛ وتُصحَّح الفاتورة المُرحَّلة بإشعار دائن."
+
+#. module: ncollection_audit
+#. odoo-python
 #: code:addons/ncollection_audit/models/audit_values.py:0
 msgid "Employee"
 msgstr "موظف"
@@ -775,6 +793,18 @@ msgid "Inventory Movement"
 msgstr "حركة مخزون"
 
 #. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Invoice Amount Audit"
+msgstr "تدقيق مبالغ الفواتير"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_values.py:0
+msgid "Invoice Line"
+msgstr "سطر فاتورة"
+
+#. module: ncollection_audit
 #. odoo-python
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "It cannot be deleted (%(reason)s), so it is archived instead: hidden from lists, kept with its links."
@@ -822,12 +852,6 @@ msgid "Journal Entry"
 msgstr "قيد يومية"
 
 #. module: ncollection_audit
-#. odoo-python
-#: code:addons/ncollection_audit/models/audit_undo.py:0
-msgid "Journal items change only through their entry (Reset to Draft, Reverse)."
-msgstr "بنود اليومية لا تتغير إلا من خلال قيدها (إعادة إلى مسودة، عكس)."
-
-#. module: ncollection_audit
 #: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__kind
 msgid "Kind"
 msgstr "النوع"
@@ -845,6 +869,12 @@ msgstr "آخر تحديث بواسطة"
 #: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "Line %(line)s · %(field)s"
+msgstr "السطر %(line)s · %(field)s"
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -1025,6 +1055,16 @@ msgstr "السجل الأصلي"
 #: model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__other
 msgid "Other"
 msgstr "أخرى"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_parent_res_id
+msgid "Parent Document ID"
+msgstr "معرّف المستند الأصل"
+
+#. module: ncollection_audit
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_parent_model
+msgid "Parent Document Model"
+msgstr "نموذج المستند الأصل"
 
 #. module: ncollection_audit
 #. odoo-python
@@ -1388,10 +1428,18 @@ msgid "Supplier Credit Note"
 msgstr "إشعار دائن من مورد"
 
 #. module: ncollection_audit
+#. odoo-javascript
 #. odoo-python
 #: code:addons/ncollection_audit/models/audit_values.py:0
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Tax"
 msgstr "ضريبة"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "Tax Amount"
+msgstr "مبلغ الضريبة"
 
 #. module: ncollection_audit
 #: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__model
@@ -1575,6 +1623,18 @@ msgstr "إلى السجل"
 
 #. module: ncollection_audit
 #. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "Total Amount"
+msgstr "المبلغ الإجمالي"
+
+#. module: ncollection_audit
+#. odoo-javascript
 #: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
 msgid "Unchanged"
 msgstr "غير متغير"
@@ -1663,6 +1723,18 @@ msgstr "تراجع بواسطة"
 #: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Undone by"
 msgstr "تم التراجع بواسطة"
+
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Untaxed"
+msgstr "غير خاضع للضريبة"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "Untaxed Amount"
+msgstr "المبلغ غير الخاضع للضريبة"
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -1844,6 +1916,18 @@ msgstr "لا يمكنك الوصول إلى السجل المرتبط."
 #: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "added"
 msgstr "مُضافة"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "amount_tax"
+msgstr "amount_tax"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "amount_total"
+msgstr "amount_total"
 
 #. module: ncollection_audit
 #. odoo-javascript

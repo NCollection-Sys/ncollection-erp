@@ -186,3 +186,10 @@
         .nc-au-desc { min-width: 0; max-width: none; }
     }
 }
+
+// invoice coverage (19.0.2.1.0): amount entries from the Invoice Amount Audit and line events in the timeline
+.nc-au {
+    .nc-au-tl-amount .nc-au-tl-dot { border-color: var(--nc-au-info-fg); }
+    .nc-au-flag-source { background: var(--nc-au-head); color: var(--nc-au-muted); font-weight: 500; }
+    .nc-au-amounts { display: flex; flex-wrap: wrap; gap: 4px 18px; font-variant-numeric: tabular-nums; }
+}
