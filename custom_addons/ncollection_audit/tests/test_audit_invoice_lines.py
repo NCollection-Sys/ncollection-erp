@@ -212,14 +212,15 @@ class TestAuditInvoiceLines(TransactionCase):
         line.with_user(self.accountant).write({'product_id': self.product_b.id})
         product_event = self._line_logs(invoice, 'write')[-1:]
         line.with_user(self.accountant).write({'price_unit': 77.0, 'tax_ids': [Command.set(self.tax.ids)]})
-        price, taxes, label = line.price_unit, line.tax_ids, line.name
+        price, taxes, label, account = line.price_unit, line.tax_ids, line.name, line.account_id
         Undo = self.Undo.with_user(self.accountant)
         preview = Undo.nc_undo_preview(product_event.id)
         self.assertTrue(preview['available'], preview.get('reason'))
         self.assertTrue(preview['related'], "the preview says what is kept")
         Undo.nc_undo_apply(product_event.id, ['product_id'], preview['fingerprint'])
         self.assertEqual(line.product_id, self.product_a)
-        self.assertEqual((line.price_unit, line.tax_ids, line.name), (price, taxes, label),
+        self.assertEqual((line.price_unit, line.tax_ids, line.name, line.account_id),
+                         (price, taxes, label, account),
                          "only the product changed: price, taxes and label are what the user saw")
 
     def test_create_returns_every_record_whatever_the_audit_records(self):

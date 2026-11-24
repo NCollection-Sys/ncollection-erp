@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 06:37+0000\n"
-"PO-Revision-Date: 2026-11-24 06:37+0000\n"
+"POT-Creation-Date: 2026-11-24 06:50+0000\n"
+"PO-Revision-Date: 2026-11-24 06:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1270,6 +1270,12 @@ msgstr "استعادة الحقول المحددة"
 #: model:ir.model.fields.selection,name:ncollection_audit.selection__ncollection_audit_undo__kind__update
 msgid "Restore values"
 msgstr "استعادة القيم"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_undo.py:0
+msgid "Restoring the product or the unit keeps the line's current price, taxes, account, analytic split, description and discount (the system would otherwise re-price the line); restore those too if you want their earlier values."
+msgstr "استعادة المنتج أو الوحدة تُبقي على السعر الحالي للسطر والضرائب والحساب والتوزيع التحليلي والوصف والخصم (وإلا أعاد النظام تسعير السطر)؛ استعد هذه أيضًا إذا أردت قيمها السابقة."
 
 #. module: ncollection_audit
 #. odoo-python

@@ -77,7 +77,8 @@ DATE_FIELDS = ('date', 'invoice_date', 'accounting_date')
 # (stored computes that depend on it). The preview shows only what is restored, so these are written back with their
 # CURRENT values unless they are restored too: nothing changes that the user did not see (accounting review HIGH).
 KEEP_WITH = {'account.move.line': ('product_id', 'product_uom_id')}
-KEPT_FIELDS = {'account.move.line': ('price_unit', 'tax_ids', 'name', 'product_uom_id', 'discount')}
+KEPT_FIELDS = {'account.move.line': ('price_unit', 'tax_ids', 'name', 'product_uom_id', 'discount', 'account_id',
+                                     'analytic_distribution')}
 
 
 def _with_kept_values(record, vals):
@@ -345,8 +346,9 @@ class AuditUndo(models.Model):
             return result
         related = []
         if model._name in KEEP_WITH and set(KEEP_WITH[model._name]) & {r['field'] for r in rows if r['restorable']}:
-            related.append(env._("Restoring the product or the unit keeps the line's current price, taxes, "
-                                 "description and discount (Odoo would otherwise re-price the line); restore those "
+            related.append(env._("Restoring the product or the unit keeps the line's current price, taxes, account, "
+                                 "analytic split, description and discount (the system would otherwise re-price the "
+                                 "line); restore those "
                                  "too if you want their earlier values."))
         return {'available': True, 'kind': 'update', 'modes': ['restore'], 'rows': rows, 'vals': vals,
                 'reason': '', 'hint': '', 'related': related,
