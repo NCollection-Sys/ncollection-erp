@@ -7,6 +7,8 @@ from odoo import Command, fields
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
+from ..models.audit_policy import _nc_fields_cached
+
 
 @tagged('post_install', '-at_install')
 class TestAuditInvoiceLines(TransactionCase):
@@ -101,8 +103,13 @@ class TestAuditInvoiceLines(TransactionCase):
         invoice.with_user(self.accountant).write({'ref': 'NOISE-1'})
         fields_ = self.Log.search([('model_model', '=', 'account.move'), ('res_id', '=', invoice.id),
                                    ('method', '=', 'write')]).line_ids.mapped('field_name')
-        self.assertIn('ref', fields_)
         self.assertNotIn('is_manually_modified', fields_)
+        header_recorded = 'account.move' in self.env['ncollection.audit.policy']._nc_policy_map()
+        # a tenant records the invoice header; where a platform module extends account.move (the CI database
+        # installs the platform layer too) it is a reserved model and nothing at all is recorded for the header
+        self.assertEqual('ref' in fields_, header_recorded)
+        self.assertIn('is_manually_modified', self.env['account.move']._fields, "the excluded field exists")
+        self.assertNotIn('is_manually_modified', _nc_fields_cached(self.env['account.move'], frozenset()))
 
     # ---- one history, two sources ----------------------------------------
 
@@ -119,13 +126,15 @@ class TestAuditInvoiceLines(TransactionCase):
         base = fields.Datetime.now() - timedelta(hours=2)
         moments = {log.id: base + timedelta(minutes=10 * i) for i, log in enumerate(logs)}
         # the invoice and the line created with it are ONE operation (one transaction time), as in real use
-        invoice_create = logs.filtered(lambda log: log.model_model == 'account.move' and log.method == 'create')
+        # (on a database where a platform module extends account.move - the CI database installs the platform layer -
+        # the invoice header is a reserved model and not recorded natively: the first event is then the line's)
+        invoice_create = logs[:1]
         for log in logs.filtered(lambda log: log.model_model == 'account.move.line' and log.method == 'create'):
             moments[log.id] = moments[invoice_create.id]
         for log in logs:
             self.env.cr.execute("UPDATE auditlog_log SET create_date = %s WHERE id = %s", (moments[log.id], log.id))
         own = [log for log in logs if log.model_model == 'account.move.line' and log.method == 'write']
-        create = logs.filtered(lambda log: log.model_model == 'account.move' and log.method == 'create')[:1]
+        create = invoice_create
         for row, event in zip(amounts, [create] + own):
             self.env.cr.execute("UPDATE ncollection_invoice_audit SET create_date = %s WHERE id = %s",
                                 (moments[event.id] + timedelta(minutes=1), row.id))
@@ -252,7 +261,7 @@ class TestAuditInvoiceLines(TransactionCase):
         temporary = invoice.invoice_line_ids.filtered(lambda line: line.name == 'Temporary')
         invoice.with_user(self.accountant).write({'invoice_line_ids': [Command.unlink(temporary.id)]})
         logs = self.Service._nc_history_logs('account.move', invoice.id)
-        first = logs.filtered(lambda log: log.model_model == 'account.move' and log.method == 'create')
+        first = logs[:1]
         compare = self.Service.with_user(self.accountant).nc_audit_compare(
             'account.move', invoice.id, first.id, logs[-1].id)
         temp_rows = [r for r in compare['rows'] if r['field'].startswith('account.move.line:%s:' % temporary.id)]
