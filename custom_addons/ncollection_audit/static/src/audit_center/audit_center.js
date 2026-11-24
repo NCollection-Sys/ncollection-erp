@@ -351,7 +351,7 @@ export class NcAuditCenter extends Component {
         }
         const items = h.versions.map((v) => ({ key: "e" + v.id, kind: "event", date: v.date, v }));
         for (const a of h.amounts || []) {
-            items.push({ key: "a" + a.id, kind: "amount", date: a.date, a });
+            items.push({ key: "a" + a.id, kind: "amount", date: a.tx || a.date, a });
         }
         return items.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : (x.kind === y.kind ? 0 : x.kind === "amount" ? -1 : 1)));
     }

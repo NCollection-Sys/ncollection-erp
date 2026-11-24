@@ -324,10 +324,13 @@ class AuditService(models.AbstractModel):
             record = self.env[model].with_context(active_test=False).browse(res_id)
             if record.sudo().exists() and not record.has_access('read'):
                 raise AccessError(self.env._("You are not allowed to see this document's history."))
-        return self.env['auditlog.log'].search(
+        logs = self.env['auditlog.log'].search(
             self._nc_base_domain() + ['|', '&', ('model_model', '=', model), ('res_id', '=', res_id),
                                       '&', ('nc_parent_model', '=', model), ('nc_parent_res_id', '=', res_id)],
             order='create_date asc, id asc', limit=MAX_HISTORY)
+        # Within ONE operation (same transaction time) the document's own event comes first: an invoice's lines are
+        # created inside the invoice's own create, so their rows have lower ids, but the invoice exists first.
+        return logs.sorted(lambda log: (log.create_date, 1 if log.nc_parent_model else 0, log.id))
 
     @api.model
     def _nc_amount_rows(self, model, res_id):
@@ -344,7 +347,7 @@ class AuditService(models.AbstractModel):
             # a DELETED invoice has no record rule left to apply: its amounts are shown only within the companies the
             # reader works in (the amount audit keeps the invoice's company)
             domain.append(('company_id', 'in', self.env.companies.ids))
-        return self.env['ncollection.invoice.audit'].sudo().search(domain, order='logged_at asc, id asc')
+        return self.env['ncollection.invoice.audit'].sudo().search(domain, order='create_date asc, id asc')
 
     @api.model
     def _nc_amount_entry(self, row):
@@ -352,6 +355,7 @@ class AuditService(models.AbstractModel):
         money = lambda value: V.formatLang(self.env, value, currency_obj=currency)  # noqa: E731
         return {
             'id': row.id, 'date': fields.Datetime.to_string(row.logged_at), 'user': row.user_id.sudo().name or '',
+            'tx': fields.Datetime.to_string(row.create_date),        # the transaction time, for ordering
             'event': dict(row._fields['event']._description_selection(self.env)).get(row.event, row.event),
             'untaxed': [money(row.old_amount_untaxed), money(row.new_amount_untaxed)],
             'tax': [money(row.old_amount_tax), money(row.new_amount_tax)],
@@ -413,10 +417,11 @@ class AuditService(models.AbstractModel):
     def _nc_amount_at(self, amounts, cutoff, name):
         """An invoice amount as the Invoice Amount Audit recorded it at the end of a version: the NEW value of the
         last row before ``cutoff`` (the start of the next recorded event), else the OLD value of the first row."""
-        # the amount audit stores whole seconds while an event's time is its transaction start: a row logged in the
-        # SAME second as the next event's start is attributed to that next event (it cannot have been earlier)
-        floor = cutoff.replace(microsecond=0) if cutoff else None
-        before = amounts.filtered(lambda row: floor is None or row.logged_at < floor)
+        # Matched on the TRANSACTION time, not the wall clock: an amount row's own create_date is the start of the
+        # database transaction that wrote it - the same clock as an audit event's create_date, so a row belongs exactly
+        # to the operation that changed the amount. (logged_at, kept and shown as recorded, has whole seconds only and
+        # could not tell two quick operations apart.) Nothing historical is rewritten.
+        before = amounts.filtered(lambda row: cutoff is None or row.create_date < cutoff)
         if before:
             return before[-1]['new_' + name], True
         if amounts:
@@ -432,6 +437,16 @@ class AuditService(models.AbstractModel):
         if log_a not in ids or log_b not in ids:
             raise AccessError(self.env._("These versions are not part of this document's visible history."))
         ia, ib = sorted((ids.index(log_a), ids.index(log_b)))
+
+        def operation_end(index):
+            """The last LINE event of the same operation (same transaction time): a version includes the lines its
+            document event created or changed with it (an invoice created with its lines is one version)."""
+            while (index + 1 < len(logs) and logs[index + 1].nc_parent_model
+                   and logs[index + 1].create_date == logs[index].create_date):
+                index += 1
+            return index
+
+        sa, sb = operation_end(ia), operation_end(ib)
         events = [(log, {(log.model_model, log.res_id, line.field_name): line for line in log.line_ids})
                   for log in logs]
         keys, first_action, line_names = [], {}, {}
@@ -465,8 +480,8 @@ class AuditService(models.AbstractModel):
             field = owner._fields.get(name) if owner is not None else None
             if field is None:
                 continue
-            ra, ta, ka = self._nc_state_after(events, ia, key, first_action)
-            rb, tb, kb = self._nc_state_after(events, ib, key, first_action)
+            ra, ta, ka = self._nc_state_after(events, sa, key, first_action)
+            rb, tb, kb = self._nc_state_after(events, sb, key, first_action)
             da, kind_a = V.display(self.env, key_model, field, ra, ta, currency) if ka else (
                 self.env._("Not recorded"), 'unknown')
             db, kind_b = V.display(self.env, key_model, field, rb, tb, currency) if kb else (
@@ -482,8 +497,13 @@ class AuditService(models.AbstractModel):
         # AMOUNTS from the Invoice Amount Audit (the authority), at the end of each version
         amounts = self._nc_amount_rows(model, res_id)
         if amounts:
-            cut_a = logs[ia + 1].create_date if ia + 1 < len(logs) else None
-            cut_b = logs[ib + 1].create_date if ib + 1 < len(logs) else None
+            def next_moment(index):
+                # the start of the NEXT operation (events of the same transaction share one time and one state)
+                later = [log.create_date for log in logs[index + 1:] if log.create_date > logs[index].create_date]
+                return later[0] if later else None
+
+            cut_a = next_moment(ia)
+            cut_b = next_moment(ib)
             amount_field = self.env['ncollection.invoice.audit']._fields['new_amount_total']
             for name, label in (('amount_untaxed', self.env._("Untaxed Amount")),
                                 ('amount_tax', self.env._("Tax Amount")),

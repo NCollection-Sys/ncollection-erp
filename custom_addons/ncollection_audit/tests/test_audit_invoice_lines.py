@@ -123,7 +123,7 @@ class TestAuditInvoiceLines(TransactionCase):
         own = [log for log in logs if log.model_model == 'account.move.line' and log.method == 'write']
         create = logs.filtered(lambda log: log.model_model == 'account.move' and log.method == 'create')[:1]
         for row, event in zip(amounts, [create] + own):
-            self.env.cr.execute("UPDATE ncollection_invoice_audit SET logged_at = %s WHERE id = %s",
+            self.env.cr.execute("UPDATE ncollection_invoice_audit SET create_date = %s WHERE id = %s",
                                 (moments[event.id] + timedelta(minutes=1), row.id))
         self.env.invalidate_all()
         history = self.Service.with_user(self.accountant).nc_audit_history('account.move', invoice.id)
