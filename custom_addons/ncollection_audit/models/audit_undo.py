@@ -40,6 +40,7 @@ from odoo.tools import SQL, mute_logger
 
 from . import audit_values as V
 from .audit_flags import suppress_capture, undo_scope
+from .audit_policy import WHITELIST
 
 _logger = logging.getLogger(__name__)
 
@@ -72,6 +73,25 @@ NEVER_RESTORE = {
 ACCOUNTING_MASTER = {'res.partner', 'account.account', 'account.journal', 'product.template',
                      'product.product', 'account.tax', 'account.analytic.account'}
 DATE_FIELDS = ('date', 'invoice_date', 'accounting_date')
+# Restoring a line's product or unit makes Odoo recompute the line's price, taxes, label and unit from the product
+# (stored computes that depend on it). The preview shows only what is restored, so these are written back with their
+# CURRENT values unless they are restored too: nothing changes that the user did not see (accounting review HIGH).
+KEEP_WITH = {'account.move.line': ('product_id', 'product_uom_id')}
+KEPT_FIELDS = {'account.move.line': ('price_unit', 'tax_ids', 'name', 'product_uom_id', 'discount')}
+
+
+def _with_kept_values(record, vals):
+    if not set(KEEP_WITH.get(record._name, ())) & set(vals):
+        return vals
+    vals = dict(vals)
+    for name in KEPT_FIELDS[record._name]:
+        if name in vals:
+            continue
+        field = record._fields[name]
+        value = record[name]
+        vals[name] = [(6, 0, value.ids)] if field.type == 'many2many' else (
+            value.id if field.type == 'many2one' else value)
+    return vals
 
 
 def _hint(env, model):
@@ -221,7 +241,8 @@ class AuditUndo(models.Model):
             return env._("Restricted field: it is never restored from the trail.")
         if not field.store or field.type not in V.SUPPORTED:
             return env._("This kind of field cannot be restored.")
-        if field.compute and not field.inverse and field.readonly:
+        # an editable computed value is restorable only on whitelisted models (invoice lines), never generally
+        if field.compute and not field.inverse and (field.readonly or model._name not in WHITELIST):
             return env._("Computed by the system.")
         if field.readonly and not (field.compute and field.inverse):
             return env._("Set by the system (read-only).")
@@ -322,8 +343,13 @@ class AuditUndo(models.Model):
             result = self._nc_refuse(reason)
             result['rows'] = rows
             return result
+        related = []
+        if model._name in KEEP_WITH and set(KEEP_WITH[model._name]) & {r['field'] for r in rows if r['restorable']}:
+            related.append(env._("Restoring the product or the unit keeps the line's current price, taxes, "
+                                 "description and discount (Odoo would otherwise re-price the line); restore those "
+                                 "too if you want their earlier values."))
         return {'available': True, 'kind': 'update', 'modes': ['restore'], 'rows': rows, 'vals': vals,
-                'reason': '', 'hint': '', 'related': [],
+                'reason': '', 'hint': '', 'related': related,
                 'effect': env._("The selected fields get their earlier values back. Nothing else changes.")}
 
     @api.model
@@ -485,7 +511,7 @@ class AuditUndo(models.Model):
                 for name in vals:
                     details[name] = [V.display_current(env, record.sudo(), model._fields[name])[0],
                                      next(r['restore'] for r in analysis['rows'] if r['field'] == name)]
-                record.write(vals)
+                record.write(_with_kept_values(record, vals))
                 result_id = record.id
             elif mode == 'archive':
                 record.write({'active': False})

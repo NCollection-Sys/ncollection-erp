@@ -335,8 +335,16 @@ class AuditService(models.AbstractModel):
         read here, never copied). Callers have already checked the reader may see this invoice's history."""
         if model != 'account.move' or 'ncollection.invoice.audit' not in self.env:
             return self.env['auditlog.log'].browse()
-        return self.env['ncollection.invoice.audit'].sudo().search([('res_id', '=', res_id)],
-                                                                   order='logged_at asc, id asc')
+        domain = [('res_id', '=', res_id)]
+        invoice = self.env['account.move'].browse(res_id)
+        if invoice.sudo().exists():
+            if not invoice.has_access('read'):          # defensive: never amounts of an invoice the reader can't open
+                return self.env['ncollection.invoice.audit'].browse()
+        else:
+            # a DELETED invoice has no record rule left to apply: its amounts are shown only within the companies the
+            # reader works in (the amount audit keeps the invoice's company)
+            domain.append(('company_id', 'in', self.env.companies.ids))
+        return self.env['ncollection.invoice.audit'].sudo().search(domain, order='logged_at asc, id asc')
 
     @api.model
     def _nc_amount_entry(self, row):
@@ -405,7 +413,10 @@ class AuditService(models.AbstractModel):
     def _nc_amount_at(self, amounts, cutoff, name):
         """An invoice amount as the Invoice Amount Audit recorded it at the end of a version: the NEW value of the
         last row before ``cutoff`` (the start of the next recorded event), else the OLD value of the first row."""
-        before = amounts.filtered(lambda row: cutoff is None or row.logged_at < cutoff)
+        # the amount audit stores whole seconds while an event's time is its transaction start: a row logged in the
+        # SAME second as the next event's start is attributed to that next event (it cannot have been earlier)
+        floor = cutoff.replace(microsecond=0) if cutoff else None
+        before = amounts.filtered(lambda row: floor is None or row.logged_at < floor)
         if before:
             return before[-1]['new_' + name], True
         if amounts:
@@ -480,7 +491,7 @@ class AuditService(models.AbstractModel):
                 va, ka = self._nc_amount_at(amounts, cut_a, name)
                 vb, kb = self._nc_amount_at(amounts, cut_b, name)
                 (da, kind_a), (db, kind_b) = (
-                    (V.formatLang(self.env, value, currency_obj=currency), 'value') if known
+                    (V.formatLang(self.env, value, currency_obj=amounts[-1].currency_id or currency), 'value') if known
                     else (self.env._("Not recorded"), 'unknown')
                     for value, known in ((va, ka), (vb, kb)))
                 status = 'unknown' if not (ka and kb) else (

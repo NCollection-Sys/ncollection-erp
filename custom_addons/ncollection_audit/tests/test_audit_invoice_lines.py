@@ -205,3 +205,35 @@ class TestAuditInvoiceLines(TransactionCase):
         log = self._line_logs(invoice, 'write')
         self.company.sudo().fiscalyear_lock_date = fields.Date.to_date('2021-01-31')
         self.assertFalse(self.Undo.with_user(self.accountant).nc_undo_preview(log.id)['available'])
+
+    def test_restoring_only_the_product_never_re_prices_the_line(self):
+        invoice = self._invoice()
+        line = invoice.invoice_line_ids
+        line.with_user(self.accountant).write({'product_id': self.product_b.id})
+        product_event = self._line_logs(invoice, 'write')[-1:]
+        line.with_user(self.accountant).write({'price_unit': 77.0, 'tax_ids': [Command.set(self.tax.ids)]})
+        price, taxes, label = line.price_unit, line.tax_ids, line.name
+        Undo = self.Undo.with_user(self.accountant)
+        preview = Undo.nc_undo_preview(product_event.id)
+        self.assertTrue(preview['available'], preview.get('reason'))
+        self.assertTrue(preview['related'], "the preview says what is kept")
+        Undo.nc_undo_apply(product_event.id, ['product_id'], preview['fingerprint'])
+        self.assertEqual(line.product_id, self.product_a)
+        self.assertEqual((line.price_unit, line.tax_ids, line.name), (price, taxes, label),
+                         "only the product changed: price, taxes and label are what the user saw")
+
+    def test_create_returns_every_record_whatever_the_audit_records(self):
+        """The capture filters what it RECORDS, never what create() returns: journal-entry, tax and rounding lines
+        are created by Odoo and its callers through the return value (security review C1)."""
+        MoveLine = self.env['account.move.line']
+        entry = self.env['account.move'].create({
+            'move_type': 'entry', 'journal_id': self.env['account.journal'].search(
+                [('type', '=', 'general'), ('company_id', '=', self.company.id)], limit=1).id})
+        vals = [{'move_id': entry.id, 'account_id': self.income.id, 'debit': 10, 'name': 'd'},
+                {'move_id': entry.id, 'account_id': self.income.id, 'credit': 10, 'name': 'c'}]
+        created = MoveLine.with_context(check_move_validity=False).create(vals)
+        self.assertEqual(len(created), 2, "journal-entry lines are returned even though they are not recorded")
+        invoice = self._invoice(tax_ids=[Command.set(self.tax.ids)])
+        self.assertTrue(invoice.line_ids.filtered(lambda line: line.display_type == 'tax'),
+                        "the invoice's derived tax line exists")
+        self.assertEqual(len(self._line_logs(invoice, 'create')), 1, "only its product line is recorded")

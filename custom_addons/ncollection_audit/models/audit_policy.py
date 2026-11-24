@@ -285,7 +285,8 @@ class Base(models.AbstractModel):
                 # creating a picking: "Could not find all values of stock.picking to flush", measured)
                 # (an EDITABLE computed field - readonly=False, e.g. an invoice line's price - is the user's value once
                 # set, and it is in the cache after create: the peek below decides)
-                if truthy_only and field.compute and not field.inverse and field.readonly:
+                if truthy_only and field.compute and not field.inverse and (
+                        field.readonly or record._name not in WHITELIST):
                     continue
                 # and no snapshot ever computes: a computed / related value not already in the cache is skipped
                 if (field.compute or field.related) and (
@@ -377,16 +378,18 @@ class Base(models.AbstractModel):
     def create(self, vals_list):
         records = super().create(vals_list)
         names = records._ncal_policy('create') if records else None
+        audited = records
         if names and self._name in PARENT:
-            records = records.filtered(_in_scope)
-            names = names if records else None
+            # ONLY the audit works on the in-scope subset: the business caller always gets every created record back
+            audited = records.filtered(_in_scope)
+            names = names if audited else None
         if names:
             try:
-                snapshot = records._ncal_snapshot(names, truthy_only=True)
+                snapshot = audited._ncal_snapshot(names, truthy_only=True)
             except Exception:                         # an audit row must never abort the business write
                 _logger.exception("ncollection_audit: could not snapshot %s on create", self._name)
             else:
-                records._ncal_write_logs('create', {}, snapshot)
+                audited._ncal_write_logs("create", {}, snapshot)
         return records
 
     def write(self, vals):

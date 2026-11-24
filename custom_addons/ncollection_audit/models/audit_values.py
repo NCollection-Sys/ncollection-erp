@@ -6,6 +6,7 @@ Both capture paths store a value the way OCA ``auditlog`` does: ``str()`` of ``c
 parser is TYPED BY THE FIELD, never by the look of the text: a Char whose value is ``"123"`` stays the text ``123``.
 """
 import ast
+import json
 import datetime
 
 from odoo import fields
@@ -254,16 +255,25 @@ def label(env, model, name, fallback=''):
 def _analytic_text(env, raw):
     """An analytic distribution ({"<account ids>": percent}) as "Centre A 60%, Centre B 40%"; ids of accounts that no
     longer exist are shown as such."""
-    value = ast.literal_eval(raw) if isinstance(raw, str) else raw
+    value = raw
+    if isinstance(raw, str):
+        try:
+            value = json.loads(raw)
+        except ValueError:
+            value = ast.literal_eval(raw)
     if not isinstance(value, dict):
         return str(raw)
-    Account = env['account.analytic.account'].sudo() if 'account.analytic.account' in env else None
+    # names are read with the READER's rights: an analytic account they may not see is shown by its id only
+    Account = env['account.analytic.account'] if 'account.analytic.account' in env else None
     parts = []
     for key, percent in value.items():
         names = []
         for ident in str(key).split(','):
             ident = ident.strip()
-            record = Account.browse(int(ident)).exists() if Account is not None and ident.isdigit() else None
-            names.append(record.display_name if record else env._("#%(id)s (deleted)", id=ident))
+            record = Account.browse(int(ident)).sudo().exists() if Account is not None and ident.isdigit() else None
+            if record and Account.browse(record.id).has_access('read'):
+                names.append(Account.browse(record.id).display_name)
+            else:
+                names.append(env._("#%(id)s (deleted)", id=ident) if not record else '#%s' % ident)
         parts.append('%s %s%%' % (' + '.join(names), formatLang(env, float(percent), digits=2)))
     return ', '.join(parts)
