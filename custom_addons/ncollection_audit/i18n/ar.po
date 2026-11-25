@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 18:21+0000\n"
-"PO-Revision-Date: 2026-11-25 18:21+0000\n"
+"POT-Creation-Date: 2026-11-25 18:31+0000\n"
+"PO-Revision-Date: 2026-11-25 18:31+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1451,6 +1451,12 @@ msgstr "استعادة الحقول المحددة"
 #: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
 msgid "Restore the document to version %s for every field and line marked as restorable?"
 msgstr "استعادة المستند إلى الإصدار %s لكل حقل وسطر مُعلَّم بأنه قابل للاستعادة؟"
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_service.py:0
+msgid "Restore to the version of event #%(id)s: %(text)s"
+msgstr "استعادة إصدار الحدث رقم %(id)s: %(text)s"
 
 #. module: ncollection_audit
 #. odoo-javascript

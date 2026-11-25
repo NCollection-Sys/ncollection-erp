@@ -213,8 +213,9 @@
         font-weight: 600; font-size: 0.8rem;
     }
     .nc-au-docframe-new figcaption { background: var(--nc-au-update-bg); color: var(--nc-au-update-fg); }
-    .nc-au-docview { overflow: auto; max-height: 80vh; direction: ltr; background: #fff; }
-    .nc-au-docframe iframe { display: block; width: 960px; height: 1200px; border: 0; background: #fff; transform-origin: 0 0; }
+    // a scaled printed page is laid out from its left edge in both directions (rtlcss must not flip it)
+    .nc-au-docview { overflow: auto; max-height: 80vh; /*rtl:ignore*/ direction: ltr; background: #fff; }
+    .nc-au-docframe iframe { display: block; width: 960px; height: 1200px; border: 0; background: #fff; /*rtl:ignore*/ transform-origin: 0 0; }
 
     .nc-au-vcards { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; margin: 10px 0 4px; }
     .nc-au-vcard {

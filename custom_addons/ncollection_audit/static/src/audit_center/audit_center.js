@@ -9,7 +9,7 @@
  *
  * Nothing is stored: reopening the screen shows the defaults again (newest first, no filters).
  */
-import { Component, onWillStart, useState } from "@odoo/owl";
+import { Component, onWillStart, useExternalListener, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
@@ -30,6 +30,7 @@ export class NcAuditCenter extends Component {
 
     setup() {
         this.orm = useService("orm");
+        useExternalListener(window, "resize", () => this.fitFrames());
         this.action = useService("action");
         this.dialog = useService("dialog");
         this.notification = useService("notification");
@@ -398,7 +399,15 @@ export class NcAuditCenter extends Component {
     onFrameLoad(ev) {
         // the frame is laid out at a printed page's width (PAGE_WIDTH: every column of the report shows, its
         // breakpoints follow the frame), then scaled down to the space on screen, never above 1:1
-        const frame = ev.target;
+        this.fitFrame(ev.target);
+    }
+    fitFrames() {
+        // the space on screen changed (window resized, phone rotated): every document frame is scaled again
+        for (const frame of document.querySelectorAll(".nc-au-docview iframe")) {
+            this.fitFrame(frame);
+        }
+    }
+    fitFrame(frame) {
         const view = frame.parentElement;
         const root = frame.contentDocument?.documentElement;
         if (!root || !view) {

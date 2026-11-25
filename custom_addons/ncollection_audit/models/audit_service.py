@@ -182,7 +182,10 @@ class AuditService(models.AbstractModel):
             text = self.env._("Changed %(fields)s", fields=', '.join(labels)) if labels else self.env._("Updated")
             if more > 0:
                 text += ' ' + self.env._("(+%(count)s more)", count=more)
-        if log.nc_undo_id:
+        if log.nc_undo_id and log.nc_undo_id.sudo().kind == 'version':
+            text = self.env._("Restore to the version of event #%(id)s: %(text)s", id=log.nc_undo_id.original_log_ref,
+                              text=text)
+        elif log.nc_undo_id:
             text = self.env._("Undo of event #%(id)s: %(text)s", id=log.nc_undo_id.original_log_ref, text=text)
         return text
 
