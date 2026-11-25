@@ -7,3 +7,5 @@ from . import audit_values
 from . import audit_service
 from . import audit_undo
 from . import audit_actions
+from . import audit_document
+from . import audit_restore

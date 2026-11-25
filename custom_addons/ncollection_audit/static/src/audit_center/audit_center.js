@@ -18,6 +18,7 @@ import { localization } from "@web/core/l10n/localization";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 
 const PAGE_SIZE = 50;
+const PAGE_WIDTH = 960; // a printed page laid out on screen (px)
 const EMPTY_FILTERS = () => ({
     date_from: "", date_to: "", user_ids: [], actions: [], doc_types: [], company_ids: [],
     reference: "", res_id: "", search: "", reversed: "",
@@ -42,6 +43,10 @@ export class NcAuditCenter extends Component {
             event: null, tab: "changes", showAllLines: false,
             history: null, compare: null, compareA: null, compareB: null, showUnchanged: false,
             undo: null, undoSelected: {}, undoBusy: false, undoDone: null, error: "",
+            doc: null, docLoading: false, docMode: "document", printable: null, vcmp: null, vcmpLoading: false,
+            restore: null, restoreBusy: false, restoreDone: null, pickFirst: null,
+            doc: null, docLoading: false, docMode: "document", printable: null, vcmp: null, vcmpLoading: false,
+            restore: null, restoreBusy: false, restoreDone: null,
         });
         onWillStart(async () => {
             this.state.options = await this.orm.call("ncollection.audit.service", "nc_audit_options", []);
@@ -256,6 +261,12 @@ export class NcAuditCenter extends Component {
         this.state.compare = null;
         this.state.undo = null;
         this.state.undoDone = null;
+        this.state.doc = null;
+        this.state.docMode = "document";
+        this.state.printable = null;
+        this.state.vcmp = null;
+        this.state.restore = null;
+        this.state.restoreDone = null;
         await this.setTab(tab);
     }
     onSortKey(ev, column) {
@@ -283,8 +294,15 @@ export class NcAuditCenter extends Component {
                 [event.history_model || event.model, event.history_res_id || event.res_id]);
             this.defaultCompare();
         }
+        if ((tab === "history" || tab === "compare") && this.state.printable === null && event) {
+            this.state.printable = await this.orm.call("ncollection.audit.document", "nc_audit_printable",
+                [event.history_model || event.model, event.history_res_id || event.res_id]);
+        }
         if (tab === "compare" && !this.state.compare) {
             await this.runCompare();
+        }
+        if (tab === "changes" && !this.state.doc && event) {
+            await this.loadDocument();
         }
         if (tab === "undo" && !this.state.undo) {
             await this.previewUndo();
@@ -333,6 +351,109 @@ export class NcAuditCenter extends Component {
         }
         this.state.compare = await this.orm.call("ncollection.audit.service", "nc_audit_compare",
             [h.model, h.res_id, parseInt(this.state.compareA, 10), parseInt(this.state.compareB, 10)]);
+        this.state.restore = null;
+        if (this.state.printable?.printable) {
+            this.state.vcmpLoading = true;
+            try {
+                this.state.vcmp = await this.orm.call("ncollection.audit.document", "nc_audit_document_compare",
+                    [h.model, h.res_id, parseInt(this.state.compareA, 10), parseInt(this.state.compareB, 10)]);
+            } catch (error) {
+                this.state.vcmp = { printable: false, reason: error.data?.message || String(error) };
+            } finally {
+                this.state.vcmpLoading = false;
+            }
+        }
+    }
+
+    // ---- documents (printable versions) and restoring a version ---------------
+
+    async loadDocument() {
+        this.state.docLoading = true;
+        try {
+            this.state.doc = await this.orm.call("ncollection.audit.document", "nc_audit_document_event",
+                [this.state.event.id]);
+        } catch (error) {
+            this.state.doc = { printable: false, reason: error.data?.message || String(error) };
+        } finally {
+            this.state.docLoading = false;
+        }
+    }
+    pickVersion(id) {
+        // version cards: the first click chooses one version, the second the other (the older one becomes A)
+        const versions = this.state.history?.versions || [];
+        const order = (vid) => versions.findIndex((v) => v.id === vid);
+        if (!this.state.pickFirst || this.state.pickFirst === id) {
+            this.state.pickFirst = id;
+            return;
+        }
+        const [a, b] = [this.state.pickFirst, id].sort((x, y) => order(x) - order(y));
+        this.state.pickFirst = null;
+        this.state.compareA = a;
+        this.state.compareB = b;
+        return this.runCompare();
+    }
+    isPicked(id) {
+        return [this.state.pickFirst, this.state.compareA, this.state.compareB].map(String).includes(String(id));
+    }
+    onFrameLoad(ev) {
+        // the frame is laid out at a printed page's width (PAGE_WIDTH: every column of the report shows, its
+        // breakpoints follow the frame), then scaled down to the space on screen, never above 1:1
+        const frame = ev.target;
+        const view = frame.parentElement;
+        const root = frame.contentDocument?.documentElement;
+        if (!root || !view) {
+            return;
+        }
+        const scale = Math.min(1, view.clientWidth / PAGE_WIDTH);
+        const height = root.scrollHeight;
+        frame.style.height = `${height}px`;
+        frame.style.transform = `scale(${scale})`;
+        frame.style.marginBottom = `${height * scale - height}px`;
+        frame.style.marginRight = `${PAGE_WIDTH * scale - PAGE_WIDTH}px`;
+    }
+    versionOf(id) {
+        return (this.state.history?.versions || []).find((v) => String(v.id) === String(id));
+    }
+    async previewRestore(logId) {
+        const h = this.state.history;
+        this.state.restoreDone = null;
+        try {
+            const preview = await this.orm.call("ncollection.audit.undo", "nc_restore_preview",
+                [h.model, h.res_id, parseInt(logId, 10)]);
+            preview.logId = parseInt(logId, 10);
+            this.state.restore = preview;
+        } catch (error) {
+            this.notification.add(error.data?.message || String(error), { type: "danger" });
+        }
+    }
+    confirmRestore() {
+        const r = this.state.restore;
+        this.dialog.add(ConfirmationDialog, {
+            title: _t("Restore version %s", r.version),
+            body: _t("Restore the document to version %s for every field and line marked as restorable?", r.version),
+            confirmLabel: _t("Restore"),
+            confirm: () => this.applyRestore(),
+            cancel: () => {},
+        });
+    }
+    async applyRestore() {
+        const h = this.state.history;
+        const r = this.state.restore;
+        this.state.restoreBusy = true;
+        try {
+            this.state.restoreDone = await this.orm.call("ncollection.audit.undo", "nc_restore_apply",
+                [h.model, h.res_id, r.logId, r.fingerprint]);
+            this.notification.add(_t("Version restored. It is recorded in the Audit Log."), { type: "success" });
+            this.state.history = await this.orm.call("ncollection.audit.service", "nc_audit_history",
+                [h.model, h.res_id]);
+            this.defaultCompare();
+            await this.runCompare();
+            this.state.restore = r; // keep the result in view (runCompare closes the preview panel)
+        } catch (error) {
+            this.notification.add(error.data?.message || String(error), { type: "danger", sticky: true });
+        } finally {
+            this.state.restoreBusy = false;
+        }
     }
     async compareFromTimeline(a, b) {
         this.state.compareA = a;

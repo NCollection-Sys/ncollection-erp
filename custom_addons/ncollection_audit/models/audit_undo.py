@@ -127,9 +127,11 @@ class AuditUndo(models.Model):
     # per-event guard and the ledger must outlive the trail's retention, which must never be blocked by an Undo.
     original_log_ref = fields.Integer(string='Event Undone (id)', readonly=True, required=True, index=True)
     kind = fields.Selection([('update', 'Restore values'), ('create', 'Remove created document'),
-                             ('delete', 'Restore deleted document')], required=True, readonly=True)
+                             ('delete', 'Restore deleted document'), ('version', 'Restore a version')],
+                            required=True, readonly=True)
     mode = fields.Selection([('restore', 'Values restored'), ('delete', 'Deleted'), ('archive', 'Archived'),
-                             ('recreate', 'Recreated as a new document')], readonly=True)
+                             ('recreate', 'Recreated as a new document'), ('version', 'Version restored')],
+                            readonly=True)
     user_id = fields.Many2one('res.users', string='Undone By', required=True, readonly=True,
                               default=lambda self: self.env.user, ondelete='restrict')
     company_id = fields.Many2one('res.company', readonly=True, index=True)
@@ -142,7 +144,9 @@ class AuditUndo(models.Model):
     result_log_ids = fields.One2many('auditlog.log', 'nc_undo_id', string='Events Written by the Undo',
                                      readonly=True)
 
-    _original_unique = models.Constraint('unique(original_log_ref)', 'This event has already been undone.')
+    # one Undo per event; restoring a VERSION may be done again later (the document can change again in between)
+    _original_unique_idx = models.UniqueIndex("(original_log_ref) WHERE kind != 'version'",
+                                              'This event has already been undone.')
 
     def write(self, vals):
         # Append-only: the only write is the engine's own pending -> done (sudo, inside the same transaction).
@@ -271,7 +275,7 @@ class AuditUndo(models.Model):
         env = self.env
         if not env.user.has_group('ncollection_audit.group_audit_undo'):
             return self._nc_refuse(env._("You are not allowed to undo audited changes."))
-        if self.sudo().search_count([('original_log_ref', '=', log.id)]):
+        if self.sudo().search_count([('original_log_ref', '=', log.id), ('kind', '!=', 'version')]):
             return self._nc_refuse(env._("This event has already been undone."))
         model, record = self._nc_target(log)
         refusal = self._nc_policy_refusal(log, model)

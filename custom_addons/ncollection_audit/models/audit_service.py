@@ -157,7 +157,7 @@ class AuditService(models.AbstractModel):
                        ('line_ids.field_description', 'ilike', text)]
         reversed_ = filters.get('reversed')
         undone = self.env['ncollection.audit.undo'].sudo().search(
-            [('original_log_ref', '!=', 0)]).mapped('original_log_ref')
+            [('original_log_ref', '!=', 0), ('kind', '!=', 'version')]).mapped('original_log_ref')
         if reversed_ == 'reversed':
             domain.append(('id', 'in', undone))
         elif reversed_ == 'not_reversed':
@@ -221,7 +221,7 @@ class AuditService(models.AbstractModel):
         total = Log.search_count(domain)
         logs = Log.search(domain, offset=offset, limit=limit, order='%s %s, id %s' % (column, way, way))
         undone = set(self.env['ncollection.audit.undo'].sudo().search(
-            [('original_log_ref', 'in', logs.ids)]).mapped('original_log_ref'))
+            [('original_log_ref', 'in', logs.ids), ('kind', '!=', 'version')]).mapped('original_log_ref'))
         return {'total': total, 'rows': [self._nc_row(log, undone) for log in logs]}
 
     @api.model
@@ -289,7 +289,8 @@ class AuditService(models.AbstractModel):
         record, readable = self._nc_document(log)
         if record is not None and not readable:
             raise AccessError(self.env._("You are not allowed to see this document's history."))
-        undo = self.env['ncollection.audit.undo'].sudo().search([('original_log_ref', '=', log.id)], limit=1)
+        undo = self.env['ncollection.audit.undo'].sudo().search(
+            [('original_log_ref', '=', log.id), ('kind', '!=', 'version')], limit=1)
         label = V.doc_label(self.env, log.nc_doc_type or log.model_model, log.model_name)
         technical = self.env.user.has_group('base.group_system')
         return {
@@ -366,7 +367,7 @@ class AuditService(models.AbstractModel):
     def nc_audit_history(self, model, res_id):
         logs = self._nc_history_logs(model, res_id)
         undone = set(self.env['ncollection.audit.undo'].sudo().search(
-            [('original_log_ref', 'in', logs.ids)]).mapped('original_log_ref'))
+            [('original_log_ref', 'in', logs.ids), ('kind', '!=', 'version')]).mapped('original_log_ref'))
         own = logs.filtered(lambda log: log.model_model == model and log.res_id == res_id)
         first = own[:1]
         exists = model in self.env and bool(self.env[model].sudo().browse(res_id).exists())

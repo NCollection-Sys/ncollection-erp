@@ -280,6 +280,39 @@
 
             <!-- Changes -->
             <div t-if="state.tab === 'changes'" role="tabpanel" class="nc-au-panel">
+                <div t-if="state.docLoading" class="nc-au-state"><i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"/> Rendering the document…</div>
+                <t t-elif="state.doc and state.doc.printable">
+                    <t t-set="d" t-value="state.doc"/>
+                    <div class="nc-au-doc-bar">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="View">
+                            <button t-att-class="'btn ' + (state.docMode === 'document' ? 'btn-primary' : 'btn-outline-secondary')" t-on-click="() => { state.docMode = 'document'; }"><i class="fa fa-file-text-o" aria-hidden="true"/> Document</button>
+                            <button t-att-class="'btn ' + (state.docMode === 'data' ? 'btn-primary' : 'btn-outline-secondary')" t-on-click="() => { state.docMode = 'data'; }"><i class="fa fa-table" aria-hidden="true"/> Data</button>
+                        </div>
+                        <span class="nc-au-muted small"><i class="fa fa-print" aria-hidden="true"/> <t t-esc="d.report"/> · Version <t t-esc="d.version"/></span>
+                        <span t-if="d.changed" class="nc-au-flag nc-au-s-changed"><t t-esc="d.changed"/> changed sections highlighted</span>
+                    </div>
+                    <ul t-if="d.limits and d.limits.length" class="nc-au-limits">
+                        <li t-foreach="d.limits" t-as="lim" t-key="lim_index"><i class="fa fa-info-circle" aria-hidden="true"/> <t t-esc="lim"/></li>
+                    </ul>
+                    <div t-if="d.lost_lines and d.lost_lines.length" class="nc-au-muted small fw-bold">Lines no longer on the document (shown from their recorded values):</div>
+                    <ul t-if="d.lost_lines and d.lost_lines.length" class="nc-au-limits">
+                        <li t-foreach="d.lost_lines" t-as="ll" t-key="ll_index"><i class="fa fa-exclamation-triangle" aria-hidden="true"/> <t t-esc="ll"/></li>
+                    </ul>
+                    <div t-if="state.docMode === 'document'" t-attf-class="nc-au-docs {{d.before and d.after ? 'nc-au-docs-2' : ''}}">
+                        <figure t-if="d.before" class="nc-au-docframe">
+                            <figcaption><t t-if="ev.action === 'delete'">Document before deletion</t><t t-else="">Before</t></figcaption>
+                            <div class="nc-au-docview"><iframe sandbox="allow-same-origin" t-on-load="onFrameLoad" t-att-srcdoc="d.before" title="Before"/></div>
+                        </figure>
+                        <figure t-if="d.after" class="nc-au-docframe nc-au-docframe-new">
+                            <figcaption><t t-if="ev.action === 'create'">Document as created</t><t t-else="">After · changes in yellow</t></figcaption>
+                            <div class="nc-au-docview"><iframe sandbox="allow-same-origin" t-on-load="onFrameLoad" t-att-srcdoc="d.after" title="After"/></div>
+                        </figure>
+                    </div>
+                </t>
+                <div t-elif="state.doc and state.doc.reason" class="nc-au-note nc-au-note-info" role="status">
+                    <i class="fa fa-info-circle" aria-hidden="true"/> <div t-esc="state.doc.reason"/>
+                </div>
+                <t t-if="!(state.doc and state.doc.printable) or state.docMode === 'data'">
                 <p t-if="!ev.lines.length" class="nc-au-muted">
                     <t t-if="ev.action === 'delete'">The values before deletion were not recorded for this event.</t>
                     <t t-else="">No field values were recorded for this event.</t>
@@ -305,6 +338,7 @@
                 <button t-if="ev.lines.length > 12" class="btn btn-link btn-sm" t-on-click="() => { state.showAllLines = !state.showAllLines; }">
                     <t t-if="state.showAllLines">Show fewer</t><t t-else="">Show all <t t-esc="ev.lines.length"/> fields</t>
                 </button>
+                </t>
             </div>
 
             <!-- History -->
@@ -471,8 +505,50 @@
                 <input type="checkbox" t-model="state.showUnchanged"/> <span>Show unchanged fields</span>
             </label>
         </div>
+        <div class="nc-au-vcards" role="list" aria-label="Versions">
+            <button t-foreach="h.versions" t-as="v" t-key="v.id" role="listitem"
+                    t-attf-class="nc-au-vcard nc-au-tl-{{v.action}} {{isPicked(v.id) ? 'picked' : ''}}"
+                    t-on-click="() => this.pickVersion(v.id)">
+                <span class="nc-au-vcard-tag" t-if="v.id == state.compareA">A</span>
+                <span class="nc-au-vcard-tag" t-elif="v.id == state.compareB">B</span>
+                <b>v<t t-esc="v.version"/></b>
+                <span t-esc="actionLabel(v.action)"/>
+                <span class="nc-au-muted small" t-esc="fmtDate(v.date)"/>
+                <span class="nc-au-muted small" t-esc="v.user"/>
+            </button>
+        </div>
+        <div t-if="state.pickFirst" class="nc-au-muted small">Choose a second version to compare with v<t t-esc="versionOf(state.pickFirst)?.version"/>.</div>
         <t t-if="state.compare">
             <t t-set="c" t-value="state.compare"/>
+            <div class="nc-au-restore-bar">
+                <button class="btn btn-outline-primary btn-sm" t-on-click="() => this.previewRestore(c.a.id)"><i class="fa fa-history" aria-hidden="true"/> Restore version <t t-esc="c.a.version"/></button>
+                <button class="btn btn-outline-primary btn-sm" t-on-click="() => this.previewRestore(c.b.id)"><i class="fa fa-history" aria-hidden="true"/> Restore version <t t-esc="c.b.version"/></button>
+            </div>
+            <t t-if="state.restore"><t t-call="ncollection_audit.RestorePanel"/></t>
+            <div t-if="state.vcmpLoading" class="nc-au-state"><i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"/> Rendering both versions…</div>
+            <t t-elif="state.printable and state.printable.printable and state.vcmp and state.vcmp.printable">
+                <t t-set="vc" t-value="state.vcmp"/>
+                <div class="nc-au-doc-bar">
+                    <span class="nc-au-flag nc-au-s-changed"><t t-esc="vc.changed"/> changed sections highlighted</span>
+                </div>
+                <ul t-if="vc.limits and vc.limits.length" class="nc-au-limits">
+                    <li t-foreach="vc.limits" t-as="lim" t-key="lim_index"><i class="fa fa-info-circle" aria-hidden="true"/> <t t-esc="lim"/></li>
+                </ul>
+                <ul t-if="(vc.lost_a and vc.lost_a.length) or (vc.lost_b and vc.lost_b.length)" class="nc-au-limits">
+                    <li t-foreach="(vc.lost_a or []).concat(vc.lost_b or [])" t-as="ll" t-key="ll_index"><i class="fa fa-exclamation-triangle" aria-hidden="true"/> Line no longer on the document: <t t-esc="ll"/></li>
+                </ul>
+                <div class="nc-au-docs nc-au-docs-2">
+                    <figure class="nc-au-docframe">
+                        <figcaption>Version <t t-esc="vc.version_a"/> · <t t-esc="fmtDate(vc.date_a)"/></figcaption>
+                        <div class="nc-au-docview"><iframe sandbox="allow-same-origin" t-on-load="onFrameLoad" t-att-srcdoc="vc.a" title="Version A"/></div>
+                    </figure>
+                    <figure class="nc-au-docframe nc-au-docframe-new">
+                        <figcaption>Version <t t-esc="vc.version_b"/> · <t t-esc="fmtDate(vc.date_b)"/></figcaption>
+                        <div class="nc-au-docview"><iframe sandbox="allow-same-origin" t-on-load="onFrameLoad" t-att-srcdoc="vc.b" title="Version B"/></div>
+                    </figure>
+                </div>
+            </t>
+            <div t-elif="state.vcmp and state.vcmp.reason" class="nc-au-note nc-au-note-info" role="status"><i class="fa fa-info-circle" aria-hidden="true"/> <div t-esc="state.vcmp.reason"/></div>
             <h3 class="nc-au-cmp-title">Version <t t-esc="c.a.version"/> versus Version <t t-esc="c.b.version"/></h3>
             <div class="nc-au-summary">
                 <span class="nc-au-flag nc-au-s-changed"><t t-esc="c.summary.changed"/> changed</span>
@@ -507,6 +583,52 @@
             </table>
         </t>
     </div>
+</t>
+
+<t t-name="ncollection_audit.RestorePanel">
+    <t t-set="r" t-value="state.restore"/>
+    <section class="nc-au-restore" aria-label="Restore a version">
+        <div t-if="state.restoreDone" class="nc-au-note nc-au-note-ok" role="status">
+            <i class="fa fa-check-circle" aria-hidden="true"/> Version <t t-esc="state.restoreDone.version"/> restored.
+            <t t-foreach="state.restoreDone.log_ids" t-as="lid" t-key="lid">
+                <button class="btn btn-link btn-sm p-0" t-on-click="() => this.openEvent(lid)">Event #<t t-esc="lid"/></button>
+            </t>
+        </div>
+        <div t-elif="!r.available" class="nc-au-note nc-au-note-stop" role="alert">
+            <i class="fa fa-ban" aria-hidden="true"/>
+            <div><b>Restore unavailable.</b> <t t-esc="r.reason"/>
+                <div t-if="r.hint" class="nc-au-hint"><i class="fa fa-lightbulb-o" aria-hidden="true"/> <t t-esc="r.hint"/></div>
+            </div>
+        </div>
+        <div t-else="" class="nc-au-note nc-au-note-warn" role="status">
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
+            <div><b>Preview.</b> <t t-esc="r.effect"/> Nothing changes until you confirm.</div>
+        </div>
+        <table t-if="r.rows and r.rows.length" class="nc-au-table nc-au-diff">
+            <thead><tr><th>Field</th><th>Current value</th><th>Value of the version</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr t-foreach="r.rows" t-as="row" t-key="row.field">
+                    <td class="nc-au-flabel" t-esc="row.label"/>
+                    <td class="nc-au-old"><t t-if="row.current" t-esc="row.current"/><span t-else="" class="nc-au-empty">Empty</span></td>
+                    <td class="nc-au-new"><t t-if="row.restore" t-esc="row.restore"/><span t-else="" class="nc-au-empty">Empty</span></td>
+                    <td>
+                        <span t-if="row.restorable" class="nc-au-flag nc-au-flag-ok">Can be restored</span>
+                        <span t-else="" class="nc-au-flag nc-au-flag-off">Not restorable</span>
+                        <div t-if="row.reason" class="nc-au-reason" t-esc="row.reason"/>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <ul t-if="r.related and r.related.length" class="nc-au-related">
+            <li t-foreach="r.related" t-as="note" t-key="note_index" t-esc="note"/>
+        </ul>
+        <div t-if="r.available and !state.restoreDone" class="nc-au-undo-bar">
+            <button class="btn btn-secondary" t-on-click="() => { state.restore = null; }">Cancel</button>
+            <button class="btn btn-danger" t-att-disabled="state.restoreBusy" t-on-click="() => this.confirmRestore()">
+                <i class="fa fa-history" aria-hidden="true"/> Restore version <t t-esc="r.version"/>
+            </button>
+        </div>
+    </section>
 </t>
 
 </templates>

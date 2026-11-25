@@ -193,3 +193,56 @@
     .nc-au-flag-source { background: var(--nc-au-head); color: var(--nc-au-muted); font-weight: 500; }
     .nc-au-amounts { display: flex; flex-wrap: wrap; gap: 4px 18px; font-variant-numeric: tabular-nums; }
 }
+
+// ---- 19.0.2.2.0: printable documents, version cards, restore a version, refresh -------------------------------
+.nc-au {
+    .nc-au-card { border-radius: 10px; box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06); }
+    .nc-au-panel { padding: 16px 18px; }
+    .nc-au-state { padding: 28px; text-align: center; color: var(--nc-au-muted); }
+    .nc-au-doc-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+    .nc-au-limits { list-style: none; padding: 0; margin: 0 0 10px; color: var(--nc-au-muted); font-size: 0.8rem; }
+    .nc-au-limits li { display: flex; gap: 6px; align-items: baseline; padding: 2px 0; }
+    .nc-au-docs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .nc-au-docs-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .nc-au-docframe {
+        margin: 0; border: 1px solid var(--nc-au-border); border-radius: 8px; overflow: hidden; background: #fff;
+        display: flex; flex-direction: column;
+    }
+    .nc-au-docframe figcaption {
+        padding: 8px 12px; background: var(--nc-au-head); border-bottom: 1px solid var(--nc-au-border);
+        font-weight: 600; font-size: 0.8rem;
+    }
+    .nc-au-docframe-new figcaption { background: var(--nc-au-update-bg); color: var(--nc-au-update-fg); }
+    .nc-au-docview { overflow: auto; max-height: 80vh; direction: ltr; background: #fff; }
+    .nc-au-docframe iframe { display: block; width: 960px; height: 1200px; border: 0; background: #fff; transform-origin: 0 0; }
+
+    .nc-au-vcards { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; margin: 10px 0 4px; }
+    .nc-au-vcard {
+        position: relative; flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+        min-width: 140px; padding: 8px 12px; border: 1px solid var(--nc-au-border); border-radius: 8px;
+        background: #fff; text-align: start; border-inline-start-width: 4px; cursor: pointer;
+    }
+    .nc-au-vcard:hover { box-shadow: 0 2px 8px rgba(16, 24, 40, 0.1); }
+    .nc-au-vcard.nc-au-tl-create { border-inline-start-color: var(--nc-au-create-fg); }
+    .nc-au-vcard.nc-au-tl-update { border-inline-start-color: var(--nc-au-update-fg); }
+    .nc-au-vcard.nc-au-tl-delete { border-inline-start-color: var(--nc-au-delete-fg); }
+    .nc-au-vcard.picked { outline: 2px solid var(--nc-au-info-fg); outline-offset: 1px; }
+    .nc-au-vcard-tag {
+        position: absolute; top: -8px; inset-inline-end: -6px; background: var(--nc-au-info-fg); color: #fff;
+        border-radius: 10px; font-size: 0.7rem; font-weight: 700; padding: 0 7px;
+    }
+    .nc-au-restore-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin: 6px 0 10px; }
+    .nc-au-restore {
+        border: 1px solid var(--nc-au-border); border-radius: 8px; padding: 12px; margin-bottom: 14px;
+        background: #fcfcfd;
+    }
+    .nc-au-restore .nc-au-undo-bar { gap: 8px; }
+
+    @media (max-width: 900px) {
+        padding: 10px 10px 24px;
+        .nc-au-docs-2 { grid-template-columns: minmax(0, 1fr); }
+        .nc-au-docview { max-height: 70vh; }
+        .nc-au-table { display: block; overflow-x: auto; }
+        .nc-au-field { min-width: 0; flex: 1 1 140px; }
+    }
+}
