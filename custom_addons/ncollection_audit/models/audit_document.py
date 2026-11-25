@@ -58,7 +58,7 @@ HIGHLIGHT_CSS = (
     '</style>')
 LEAF_BLOCKERS = ('.//div | .//p | .//table | .//main | .//section | .//article | .//ul | .//ol | .//address'
                  ' | .//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//h6')
-BLOCK_TAGS = {'p','h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'address', 'dt', 'dd'}
+BLOCK_TAGS = {'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'address', 'dt', 'dd'}
 
 
 def _text(element):
