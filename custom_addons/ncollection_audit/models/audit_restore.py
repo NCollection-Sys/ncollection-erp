@@ -65,6 +65,17 @@ class AuditRestore(models.Model):
         if locked:
             return self._nc_refuse(locked, _hint(env, model))
         state, alive, _gone, _amounts = Doc._nc_state(model, res_id, *history, end)
+        if model == 'account.move':
+            # recorded line prices are amounts in the currency of that version: never written into another one
+            raw_currency = state.get((model, res_id, 'currency_id'), (None, None, False))
+            if raw_currency[2] and raw_currency[0] is not None:
+                try:
+                    then = V.parse(record._fields['currency_id'], raw_currency[0])
+                except (ValueError, SyntaxError):
+                    then = None
+                if then and then != record.sudo().currency_id.id:
+                    return self._nc_refuse(env._("The currency of this document changed since this version: its "
+                                                 "recorded prices cannot be restored in another currency."))
         rows, writes, removals = [], {}, []
         for (key_model, key_id, name), (raw, text, known) in state.items():
             if not known or not alive.get((key_model, key_id), True) or key_model not in env:
@@ -85,10 +96,13 @@ class AuditRestore(models.Model):
                 continue
             if V.same(field, V.current(target_record.sudo(), field), target):
                 continue
+            hidden = V.masked(env, key_model, field)
             row = {'field': '%s:%s:%s' % (key_model, key_id, name), 'label': label, 'restorable': False,
                    'conflict': False, 'reason': '',
-                   'current': V.display_current(env, target_record.sudo(), field)[0],
-                   'restore': V.display(env, key_model, field, raw, text)[0] if raw is not None else ''}
+                   # a restricted field's values never reach the screen, refused or not
+                   'current': env._("Hidden") if hidden else V.display_current(env, target_record.sudo(), field)[0],
+                   'restore': env._("Hidden") if hidden else (
+                       V.display(env, key_model, field, raw, text)[0] if raw is not None else '')}
             problem = self._nc_field_problem(owner, field, _Recorded(raw))
             if not problem:
                 ok, problem = self._nc_target_exists(field, target)
@@ -130,6 +144,9 @@ class AuditRestore(models.Model):
         if model == 'account.move':
             related.append(env._("Amounts and taxes are recomputed by the document from the restored lines; they "
                                  "are never written from the trail."))
+            if any(r['restorable'] and r['field'] == '%s:%s:partner_id' % (model, res_id) for r in rows):
+                related.append(env._("Restoring the customer or supplier recomputes the fiscal position, and with "
+                                     "it the taxes of the lines."))
         return {'available': True, 'kind': 'version', 'modes': ['version'], 'rows': rows, 'writes': writes,
                 'removals': removals, 'reason': '', 'hint': '', 'related': related, 'version': index + 1,
                 'effect': env._("The document returns to version %(version)s for every field and line listed as "
@@ -164,6 +181,12 @@ class AuditRestore(models.Model):
         if (not isinstance(model, str) or not isinstance(fingerprint, str)
                 or any(isinstance(x, bool) or not isinstance(x, int) for x in (res_id, log_id))):
             raise UserError(env._("Malformed request."))
+        # no row is locked for a caller that may not restore, nor on a model that is not a stored document
+        if not env.user.has_group('ncollection_audit.group_audit_undo'):
+            raise UserError(env._("You are not allowed to restore audited documents."))
+        if (model not in env or model in PROTECTED or model.startswith(PROTECTED_PREFIX)
+                or env[model]._abstract or not env[model]._auto):
+            raise UserError(env._("Restoring a version is not available for this document type."))
         if model in env:
             try:
                 with mute_logger('odoo.sql_db'):
@@ -177,6 +200,18 @@ class AuditRestore(models.Model):
             raise UserError(analysis.get('reason') or env._("This version cannot be restored."))
         if self._nc_restore_fingerprint(log_id, {'rows': analysis['rows']}) != fingerprint:
             raise UserError(env._("The document changed since the preview. Review the restore again."))
+        # the lines written or removed are locked too, at once, or nothing happens
+        touched = {}
+        for key_model, key_id in list(analysis['writes']) + list(analysis['removals']):
+            if key_model != model:
+                touched.setdefault(key_model, set()).add(key_id)
+        try:
+            with mute_logger('odoo.sql_db'):
+                for key_model, ids in touched.items():
+                    env.cr.execute(SQL("SELECT id FROM %s WHERE id IN %s FOR UPDATE NOWAIT",
+                                       SQL.identifier(env[key_model]._table), tuple(ids)))
+        except psycopg2.errors.LockNotAvailable:
+            raise UserError(env._("This document is being changed by someone else right now. Try again.")) from None
         log = env['auditlog.log'].sudo().browse(log_id)
         undo = self.sudo().create({
             'original_log_id': log.id, 'original_log_ref': log.id, 'kind': 'version', 'user_id': env.uid,

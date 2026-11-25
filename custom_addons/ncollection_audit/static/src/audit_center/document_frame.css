@@ -1,0 +1,10 @@
+/* Inside the Audit Log's document frames only (injected server-side, never part of an asset bundle).
+   Yellow = changed at this version; grey struck = removed. */
+.nc-au-chg { background: #fff1a8 !important; box-shadow: inset 3px 0 0 #e0b400; }
+tr.nc-au-chg > td, tr.nc-au-chg > th { background: #fff1a8 !important; color: #3d2e00 !important; }
+tr.nc-au-chg > td * { color: #3d2e00 !important; }
+.nc-au-was { background: #f6f6f6 !important; color: #8a8a8a !important; text-decoration: line-through; }
+tr.nc-au-was > td { background: #f6f6f6 !important; }
+body { background: #fff !important; }
+/* the layouts' decorative background shapes are sized for a printed page; on screen they only hide the content */
+svg[class*="o_shape_"] { display: none !important; }

@@ -116,6 +116,17 @@ class TestAuditDocumentVersions(TransactionCase):
         with self.assertRaises(UserError):
             self.Doc.nc_audit_printable('account.move', 'x')
 
+    def test_the_document_frames_never_allow_scripts(self):
+        """The server strips scripts, but the boundary is the sandbox: a frame with allow-same-origin AND
+        allow-scripts could reach the application. Pinned here so nobody adds it."""
+        from odoo.tools.misc import file_open
+        with file_open('ncollection_audit/static/src/audit_center/audit_center.xml') as handle:
+            source = handle.read()
+        frames = source.count('<iframe')
+        self.assertGreaterEqual(frames, 4)
+        self.assertEqual(source.count('<iframe sandbox="allow-same-origin" '), frames)
+        self.assertNotIn('allow-scripts', source)
+
     # ---- the Changes view ------------------------------------------------
 
     def test_update_event_renders_the_real_document_with_the_change_marked_and_stores_nothing(self):
@@ -257,6 +268,11 @@ class TestAuditDocumentVersions(TransactionCase):
             self.Undo.with_user(self.accountant).nc_restore_apply('account.move', invoice.id, first.id,
                                                                   preview['fingerprint'])
         self.assertEqual(line.quantity, 6, "nothing written on a refused restore")
+        # not entitled to apply: refused before any row is locked, whatever model is named
+        with self.assertRaises(UserError):
+            self.Undo.with_user(self.no_undo).nc_restore_apply('res.users', self.accountant.id, first.id, 'x' * 64)
+        with self.assertRaises(UserError):
+            self.Undo.with_user(self.accountant).nc_restore_apply('ncollection.audit.service', 1, first.id, 'x')
         # malformed
         with self.assertRaises(UserError):
             self.Undo.with_user(self.accountant).nc_restore_preview('account.move', str(invoice.id), first.id)

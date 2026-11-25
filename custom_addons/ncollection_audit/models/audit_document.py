@@ -22,13 +22,17 @@ import difflib
 import logging
 import re
 
+import psycopg2
+from markupsafe import escape
 from lxml import etree, html as lxml_html
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 from odoo.tools import SQL
+from odoo.tools.misc import file_open
 
 from . import audit_values as V
+from .audit_service import MAX_HISTORY
 
 _logger = logging.getLogger(__name__)
 
@@ -45,17 +49,8 @@ PREFERRED = {
     'stock.picking': 'stock.report_deliveryslip',
 }
 INVOICE_TYPES = ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
-HIGHLIGHT_CSS = (
-    '<style id="nc-au-highlight">'
-    '.nc-au-chg{background:#fff1a8 !important;box-shadow:inset 3px 0 0 #e0b400;}'
-    'tr.nc-au-chg>td,tr.nc-au-chg>th{background:#fff1a8 !important;color:#3d2e00 !important;}'
-    'tr.nc-au-chg>td *{color:#3d2e00 !important;}'
-    '.nc-au-was{background:#f6f6f6 !important;color:#8a8a8a !important;text-decoration:line-through;}'
-    'tr.nc-au-was>td{background:#f6f6f6 !important;}'
-    'body{background:#fff !important;}'
-    # the layouts' decorative background shapes are sized for a printed page; on screen they only hide the content
-    'svg[class*="o_shape_"]{display:none !important;}'
-    '</style>')
+with file_open('ncollection_audit/static/src/audit_center/document_frame.css') as _css:
+    HIGHLIGHT_CSS = '<style id="nc-au-highlight">%s</style>' % _css.read()
 LEAF_BLOCKERS = ('.//div | .//p | .//table | .//main | .//section | .//article | .//ul | .//ol | .//address'
                  ' | .//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//h6')
 BLOCK_TAGS = {'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'address', 'dt', 'dd'}
@@ -82,6 +77,10 @@ class AuditDocument(models.AbstractModel):
         reports = self.env['ir.actions.report'].sudo().search(
             [('model', '=', model), ('report_type', 'in', ('qweb-pdf', 'qweb-html'))], order='id')
         reports = reports.filtered(lambda r: not NOT_A_DOCUMENT.search(r.report_name or ''))
+        # a report restricted to groups is shown only to a reader in one of them, as its Print entry is
+        user = self.env.user
+        reports = reports.filtered(lambda r: not r.group_ids or any(
+            user.has_group(xid) for xid in r.group_ids.sudo().get_external_id().values() if xid))
         if not reports:
             return None
         preferred = reports.filtered(lambda r: r.report_name == PREFERRED.get(model))
@@ -191,22 +190,43 @@ class AuditDocument(models.AbstractModel):
                 limits.append(self.env._("A recorded value of %(field)s could not be read back; it is shown as it "
                                          "is today.", field=field.string))
                 continue
-            if field.type == 'many2many':
-                cr.execute(SQL("DELETE FROM %s WHERE %s = %s", SQL.identifier(field.relation),
-                               SQL.identifier(field.column1), rec_id))
-                for other in value or []:
-                    cr.execute(SQL("INSERT INTO %s (%s, %s) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                                   SQL.identifier(field.relation), SQL.identifier(field.column1),
-                                   SQL.identifier(field.column2), rec_id, other))
-            elif field.column_type:
-                cr.execute(SQL("UPDATE %s SET %s = %s WHERE id = %s", SQL.identifier(owner._table),
-                               SQL.identifier(name), value, rec_id))
+            if field.type in ('many2one', 'many2many') and value:
+                targets = [value] if field.type == 'many2one' else list(value)
+                if len(self.env[field.comodel_name].sudo().browse(targets).exists()) != len(set(targets)):
+                    limits.append(self.env._("A record %(field)s pointed to no longer exists; the value is shown "
+                                             "as it is today.", field=field.string))
+                    continue
+            try:
+                # one value that the database refuses today (a constraint, a unique name) never hides the version
+                with cr.savepoint(flush=False):
+                    if field.type == 'many2many':
+                        cr.execute(SQL("DELETE FROM %s WHERE %s = %s", SQL.identifier(field.relation),
+                                       SQL.identifier(field.column1), rec_id))
+                        for other in value or []:
+                            cr.execute(SQL("INSERT INTO %s (%s, %s) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                                           SQL.identifier(field.relation), SQL.identifier(field.column1),
+                                           SQL.identifier(field.column2), rec_id, other))
+                    elif field.column_type:
+                        cr.execute(SQL("UPDATE %s SET %s = %s WHERE id = %s", SQL.identifier(owner._table),
+                                       SQL.identifier(name), value, rec_id))
+            except (psycopg2.errors.LockNotAvailable, psycopg2.errors.DeadlockDetected):
+                raise
+            except psycopg2.Error:
+                limits.append(self.env._("A recorded value of %(field)s could not be read back; it is shown as it "
+                                         "is today.", field=field.string))
         # records that did not exist yet at this version (an invoice line added later) are taken out of the document
         for (rec_model, rec_id), is_alive in alive.items():
             if not is_alive and rec_model in self.env and (rec_model, rec_id) != (record._name, record.id):
                 if self.env[rec_model].sudo().browse(rec_id).exists():
-                    cr.execute(SQL("DELETE FROM %s WHERE id = %s", SQL.identifier(self.env[rec_model]._table),
-                                   rec_id))
+                    try:
+                        with cr.savepoint(flush=False):
+                            cr.execute(SQL("DELETE FROM %s WHERE id = %s",
+                                           SQL.identifier(self.env[rec_model]._table), rec_id))
+                    except (psycopg2.errors.LockNotAvailable, psycopg2.errors.DeadlockDetected):
+                        raise
+                    except psycopg2.Error:
+                        limits.append(self.env._("A line added after this version could not be taken out of the "
+                                                 "document; it is shown."))
         if amounts and record._name == 'account.move':
             sign = -1 if record.sudo().move_type in ('out_refund', 'in_invoice', 'in_receipt') else 1
             cr.execute(SQL(
@@ -227,6 +247,9 @@ class AuditDocument(models.AbstractModel):
         savepoint = env.cr.savepoint(flush=False)
         try:
             if overlay:
+                # a reader never waits on (or blocks) someone editing the document: the overlay's row locks are
+                # given up at once; SET LOCAL ends with the savepoint
+                env.cr.execute("SET LOCAL lock_timeout = '1500ms'")
                 self._nc_overlay(record, *overlay)
                 env.invalidate_all(flush=False)
                 if record._name == 'account.move':
@@ -234,6 +257,11 @@ class AuditDocument(models.AbstractModel):
                     lines = record.with_env(env).invoice_line_ids
                     lines._compute_totals()
             content, _kind = env['ir.actions.report']._render_qweb_html(report.report_name, [record.id])
+        except (psycopg2.errors.LockNotAvailable, psycopg2.errors.DeadlockDetected):
+            savepoint.close(rollback=True)
+            env.clear()
+            raise UserError(env._("This document is being changed by someone else right now. Try again in a "
+                                  "moment.")) from None
         finally:
             savepoint.close(rollback=True)
             env.clear()            # nothing of the overlay survives in the ORM cache or the recompute queue
@@ -302,7 +330,7 @@ class AuditDocument(models.AbstractModel):
         highlight styles, never a script."""
         base = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
         content = re.sub(r'<script\b[^>]*>.*?</script>', '', content, flags=re.S | re.I)
-        head = '<base href="%s/" target="_blank">%s' % (base.rstrip('/'), HIGHLIGHT_CSS)
+        head = '<base href="%s/" target="_blank">%s' % (escape(base.rstrip('/')), HIGHLIGHT_CSS)
         if '<head>' in content:
             return content.replace('<head>', '<head>' + head, 1)
         return '<html><head>%s</head><body>%s</body></html>' % (head, content)
@@ -354,6 +382,9 @@ class AuditDocument(models.AbstractModel):
     def _nc_render_version(self, model, res_id, record, report, logs, history, index, limits):
         """(html, lost lines) of version ``index`` (-1 = before the first recorded event)."""
         logs_, events, first_action, first_index, keys = history
+        if len(logs_) >= MAX_HISTORY:
+            limits.append(self.env._("This document has more recorded events than are read at once: versions are "
+                                     "rebuilt from the first %s events only.", MAX_HISTORY))
         state, alive, _gone, amounts = self._nc_state(
             model, res_id, logs_, events, first_action, first_index, keys, index)
         if any(not known for (m, i, _n), (_r, _t, known) in state.items() if (m, i) == (model, res_id)):
@@ -371,6 +402,8 @@ class AuditDocument(models.AbstractModel):
         """What the Changes tab shows for one event: the document as it was after the event (create, update) or before
         it (delete), highlighted against the version before it; or why it is shown as data."""
         Service = self.env['ncollection.audit.service']
+        if isinstance(log_id, bool) or not isinstance(log_id, int):
+            raise UserError(self.env._("Malformed request."))
         log = Service._nc_log(log_id)
         model = log.nc_parent_model or log.model_model
         res_id = log.nc_parent_res_id or log.res_id
@@ -404,7 +437,8 @@ class AuditDocument(models.AbstractModel):
     @api.model
     def nc_audit_document_compare(self, model, res_id, log_a, log_b):
         """Two versions of a printable document, rendered by its own report, the differences marked in both."""
-        if not all(isinstance(x, int) and not isinstance(x, bool) for x in (log_a, log_b)):
+        if not isinstance(model, str) or not all(
+                isinstance(x, int) and not isinstance(x, bool) for x in (res_id, log_a, log_b)):
             raise UserError(self.env._("Malformed request."))
         record, report, reason = self._nc_document_for(model, res_id)
         if record is None:

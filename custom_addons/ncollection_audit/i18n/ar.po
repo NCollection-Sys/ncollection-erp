@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0-20260609\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 17:20+0000\n"
-"PO-Revision-Date: 2026-11-25 17:20+0000\n"
+"POT-Creation-Date: 2026-11-25 18:21+0000\n"
+"PO-Revision-Date: 2026-11-25 18:21+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -94,6 +94,12 @@ msgstr "لا يوجد مستند مطبوع لقيد اليومية: تُعرض 
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_document.py:0
+msgid "A line added after this version could not be taken out of the document; it is shown."
+msgstr "تعذّر إخراج سطر أُضيف بعد هذا الإصدار من المستند؛ وهو معروض."
+
+#. module: ncollection_audit
+#. odoo-python
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "A new document is created from the values recorded before the deletion."
 msgstr "يُنشأ مستند جديد من القيم المُسجَّلة قبل الحذف."
@@ -103,6 +109,12 @@ msgstr "يُنشأ مستند جديد من القيم المُسجَّلة قب
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "A per-company setting: change it from the document in the right company."
 msgstr "إعداد خاص بكل شركة: غيِّره من المستند ضمن الشركة الصحيحة."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_document.py:0
+msgid "A record %(field)s pointed to no longer exists; the value is shown as it is today."
+msgstr "السجل الذي كان يشير إليه الحقل %(field)s لم يعد موجودًا؛ تُعرض القيمة كما هي اليوم."
 
 #. module: ncollection_audit
 #. odoo-python
@@ -829,6 +841,12 @@ msgstr "استلام بضائع"
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_restore.py:0
+msgid "Hidden"
+msgstr "مخفي"
+
+#. module: ncollection_audit
+#. odoo-python
 #: code:addons/ncollection_audit/models/audit_service.py:0
 #: code:addons/ncollection_audit/models/audit_values.py:0
 msgid "Hidden (restricted field)"
@@ -957,6 +975,12 @@ msgstr "آخر تحديث في"
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_document.py:0
+msgid "Line #%s"
+msgstr "السطر رقم %s"
+
+#. module: ncollection_audit
+#. odoo-python
 #: code:addons/ncollection_audit/models/audit_restore.py:0
 msgid "Line %(line)s"
 msgstr "السطر %(line)s"
@@ -973,6 +997,18 @@ msgstr "السطر %(line)s · %(field)s"
 #: code:addons/ncollection_audit/models/audit_restore.py:0
 msgid "Line deleted since this version"
 msgstr "سطر حُذف منذ هذا الإصدار"
+
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Line no longer on the document:"
+msgstr "سطر لم يعد في المستند:"
+
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Lines no longer on the document (shown from their recorded values):"
+msgstr "أسطر لم تعد في المستند (معروضة من قيمها المسجّلة):"
 
 #. module: ncollection_audit
 #. odoo-javascript
@@ -1447,6 +1483,12 @@ msgstr "استعادة إصدار غير متاحة لهذا النوع من ا�
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_restore.py:0
+msgid "Restoring the customer or supplier recomputes the fiscal position, and with it the taxes of the lines."
+msgstr "استعادة العميل أو المورد تعيد حساب الوضع الضريبي، ومعه ضرائب الأسطر."
+
+#. module: ncollection_audit
+#. odoo-python
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "Restoring the product or the unit keeps the line's current price, taxes, account, analytic split, description and discount (the system would otherwise re-price the line); restore those too if you want their earlier values."
 msgstr "استعادة المنتج أو الوحدة تُبقي على السعر الحالي للسطر والضرائب والحساب والتوزيع التحليلي والوصف والخصم (وإلا أعاد النظام تسعير السطر)؛ استعد هذه أيضًا إذا أردت قيمها السابقة."
@@ -1645,6 +1687,12 @@ msgstr "شركة المستند المُسجَّل عند كتابة الحدث.
 
 #. module: ncollection_audit
 #. odoo-python
+#: code:addons/ncollection_audit/models/audit_restore.py:0
+msgid "The currency of this document changed since this version: its recorded prices cannot be restored in another currency."
+msgstr "تغيّرت عملة هذا المستند منذ هذا الإصدار: لا يمكن استعادة أسعاره المسجّلة بعملة أخرى."
+
+#. module: ncollection_audit
+#. odoo-python
 #: code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "The current value is not the one this event wrote."
 msgstr "القيمة الحالية ليست القيمة التي كتبها هذا الحدث."
@@ -1772,6 +1820,18 @@ msgstr "تم ترحيل هذا المستند المحاسبي."
 #: code:addons/ncollection_audit/models/audit_service.py:0
 msgid "This audit event does not exist or you are not allowed to see it."
 msgstr "حدث التدقيق هذا غير موجود أو غير مسموح لك برؤيته."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_document.py:0
+msgid "This document has more recorded events than are read at once: versions are rebuilt from the first %s events only."
+msgstr "لهذا المستند أحداث مسجّلة أكثر مما يُقرأ دفعة واحدة: تُعاد بناء الإصدارات من أول %s حدث فقط."
+
+#. module: ncollection_audit
+#. odoo-python
+#: code:addons/ncollection_audit/models/audit_document.py:0
+msgid "This document is being changed by someone else right now. Try again in a moment."
+msgstr "يجري شخص آخر تعديل هذا المستند الآن. حاول مرة أخرى بعد لحظات."
 
 #. module: ncollection_audit
 #. odoo-python
