@@ -79,8 +79,8 @@ adding a module fails CI until someone updates this list.
   platform terminology rules (Supplier, not Vendor) + audited label overrides, workspace or company scope, in-page editor.
   Docs: `LABELS_AND_TERMINOLOGY.md`.
   **Settings of optional apps** (CRM, Employees, Attendances, Expenses, Manufacturing, Project, Point of Sale, Email Marketing, VAT
-  verification, ...): ONE table `wizards/app_settings.py`, offered only while the module is installed, side-effect settings applied by
-  Odoo's own `set_values` (never `execute`). Docs: `TENANT_SETTINGS_COVERAGE.md`. Also the **persistent application sidebar**
+  verification, ...): ONE table `wizards/app_settings.py`, offered only while the module is installed, each side effect applied by its own
+  `_nc_set_<setting>` (never Odoo's whole `set_values`, never `execute`; archiving switch-offs refused). Docs: `TENANT_SETTINGS_COVERAGE.md`. Also the **persistent application sidebar**
   (`static/src/app_sidebar`: Odoo's own menu-service apps and icons, collapse saved per user + database in the browser; phones keep Odoo's drawer).
 - `ncollection_api` — the public REST API (#77): `/api/v1`, OAuth2
   client-credentials, scoped tokens, per-client rate limiting, metadata-only

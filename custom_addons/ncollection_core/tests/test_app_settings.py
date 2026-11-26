@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """Settings of optional applications on the unified tenant Settings page (wizards/app_settings.py): offered only while
-their module is installed, applied where Odoo applies them (its own set_values for settings with side effects), the
-section level and the administrator rule enforced on save, and no privilege gained by the Owner."""
-from odoo.exceptions import AccessError
+their module is installed, applied where Odoo stores them with only their own side effect (never Odoo's whole
+set_values), the section level and the administrator rule enforced on save, and no privilege gained by the Owner."""
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
-from ..wizards.app_settings import APP_SETTINGS, _TYPES
+from ..wizards.app_settings import APP_SETTINGS, MAXIMUM, TENANT_WIDE, _TYPES
 
 
 @tagged('post_install', '-at_install')
@@ -51,11 +51,15 @@ class TestAppSettings(TransactionCase):
             self._settings(self.owner, **{name: True}).action_nc_save()
             self.assertNotIn(name, self.Page._nc_settings_spec())
 
-    def test_the_owner_changes_a_setting_through_odoos_own_set_values(self):
+    def test_the_owner_switches_a_feature_group(self):
         name = 'group_product_pricelist'
         if name not in self.native:
             return                          # product is not installed on this database: nothing to offer
         group = self.env.ref('product.group_product_pricelist')
+        # only empty pricelists in the company currency: switching off is then allowed (see the refusal test)
+        self.env['product.pricelist'].search([]).filtered(
+            lambda pl: pl.item_ids or pl.currency_id != (pl.company_id or self.env.company).currency_id
+        ).action_archive()
         users = self.env.ref('base.group_user')
         start = group in users.implied_ids
         self._settings(self.owner, **{name: not start}).action_nc_save()
@@ -92,16 +96,51 @@ class TestAppSettings(TransactionCase):
         with self.assertRaises(AccessError):
             self._settings(self.employee, group_mrp_byproducts=True).action_nc_save()
 
-    def test_a_page_save_leaves_other_parameters_exactly_as_they_were(self):
+    def test_a_save_writes_no_other_parameter_and_archives_nothing(self):
+        """Odoo's whole set_values is never run: no configuration parameter is rewritten, no record archived."""
         if 'group_product_pricelist' not in self.native:
             return
         params = self.env['ir.config_parameter'].sudo()
         params.set_param('ncollection.test.untouched', '5')
         before = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
+        active = self.env['product.pricelist'].search([])
         start = self._settings(self.owner).group_product_pricelist
-        self._settings(self.owner, group_product_pricelist=not start).action_nc_save()
+        if start:
+            self.env['product.pricelist'].create({'name': 'App settings priced', 'item_ids': [(0, 0, {
+                'compute_price': 'percentage', 'percent_price': 10})]})
+            active = self.env['product.pricelist'].search([])
+        try:
+            self._settings(self.owner, group_product_pricelist=not start).action_nc_save()
+        except UserError:
+            pass                            # switching off is refused while a priced list exists (asserted below)
         after = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
         self.assertEqual(before, after)
+        self.assertLessEqual(active, self.env['product.pricelist'].search([]))
+
+    def test_pricelists_stay_on_while_a_pricelist_changes_prices(self):
+        if 'group_product_pricelist' not in self.native:
+            return
+        self._settings(self.owner, group_product_pricelist=True).action_nc_save()
+        priced = self.env['product.pricelist'].create({'name': 'App settings rules', 'item_ids': [(0, 0, {
+            'compute_price': 'percentage', 'percent_price': 10})]})
+        with self.assertRaises(UserError):
+            self._settings(self.owner, group_product_pricelist=False).action_nc_save()
+        self.assertTrue(priced.active)
+        self.assertTrue(self.env.ref('product.group_product_pricelist') in self.env.ref('base.group_user').implied_ids)
+
+    def test_numbers_have_an_upper_bound(self):
+        for name, maximum in MAXIMUM.items():
+            if name not in self.native:
+                continue
+            with self.assertRaises(ValidationError):
+                self._settings(self.owner, **{name: maximum + 1}).action_nc_save()
+
+    def test_tenant_wide_settings_say_so(self):
+        for name in APP_SETTINGS:
+            label = self.Page._fields[name].string
+            self.assertEqual(label.endswith('(all companies)'), name in TENANT_WIDE, name)
+            if name in self.native and self.native[name].related:
+                self.assertNotIn(name, TENANT_WIDE, name)      # a company field is never labelled tenant-wide
 
     def test_a_delegate_cannot_write_an_accounting_control_on_the_company_directly(self):
         from ..wizards.app_settings import ADMIN_ONLY_COMPANY_FIELDS

@@ -171,7 +171,6 @@ class NcBusinessSettings(models.TransientModel):
         visible = [name for name in spec if levels[self._nc_section_of(name)] != 'hidden']
         before = self._nc_native_values(visible)
         changed = []
-        through_page = {}                              # applied together by Odoo's own set_values (app_settings.py)
         policy = self.env['ncollection.settings.policy']
         for name, how in spec.items():
             if name not in visible:
@@ -184,13 +183,9 @@ class NcBusinessSettings(models.TransientModel):
             self._nc_check_value(name, value)
             if how == 'native':
                 self._nc_apply_native(company, name, value)
-            elif how == 'settings_page':
-                through_page[name] = value
             else:
                 getattr(self, how)(company, value)
             changed.append(name)
-        if through_page:
-            self._nc_apply_via_settings_page(company, through_page)
         if changed:
             self.env.user._nc_audit('admin_settings_change', 'business settings of company %s: %s' % (
                 company.id, ', '.join(sorted(changed))))

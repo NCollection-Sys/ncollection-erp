@@ -18,10 +18,16 @@ working hours, nomenclatures) keep their own native screens and rights.
 ``admin_only`` rows are accounting controls: like the Accounting app, a Workspace Administrator only, never a
 delegate of the Business Settings section.
 
-``page`` rows have side effects in their module's own ``res.config.settings.set_values`` (e.g. Manufacturing work
-orders switch the operation type, CRM leads switch every sales team, pricelists create the default pricelist). They
-are applied by Odoo's own ``set_values`` on a settings record holding today's values plus the one change, after
-every check of this page, so the module's own logic runs. ``execute()`` (which installs modules) is never called.
+``effect`` rows have a side effect in their module's own ``res.config.settings.set_values``. Odoo's whole
+``set_values`` is NEVER run from here: it runs every installed module's save logic, rewrites configuration
+parameters and archives records. Each such row has its own ``_nc_set_<setting>`` that applies the setting where Odoo
+stores it and then ONLY the side effect that belongs to that one setting, and only when the value really changes.
+Where Odoo's side effect would archive or rewrite business records (pricelists, work-center operations, BoM
+dependencies), the switch-off is REFUSED while such records exist, with the reason; the user archives them on their
+own screen, deliberately. ``execute()`` (which installs modules) is never called.
+
+Settings that are stored on the company apply to the current company only. Feature groups and configuration
+parameters are tenant-wide in Odoo; their label says "(all companies)".
 
 Deliberately NOT offered (see TENANT_SETTINGS_COVERAGE.md): ``module_*`` (installs apps; platform entitlement),
 mail servers, OAuth / signup / 2FA / geolocation / Unsplash / digest / profiling parameters (platform or technical),
@@ -29,28 +35,29 @@ paid IAP enrichment, online payment of invoices without a provider, the restrict
 the Point of Sale shop configuration (``pos_*``: the shop's own form, for Point of Sale managers).
 """
 from odoo import api, fields, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 from ..models.settings_policy import COMPANY_FIELD_SECTION
 
 TENANT_ADMIN = 'ncollection_core.group_tenant_admin'
+STOCK_MANAGER = 'stock.group_stock_manager'
 
-# setting: (module that owns it, Settings section, label, how: 'native' | 'page', admin_only)
+# setting: (module that owns it, Settings section, label, how: 'native' | 'effect', admin_only)
 APP_SETTINGS = {
     # ---- Sales section: CRM, quotation templates, pricelists, delivery lead time
-    'group_use_lead': ('crm', 'sales', 'Leads', 'page', False),
+    'group_use_lead': ('crm', 'sales', 'Leads', 'effect', False),
     'group_use_recurring_revenues': ('crm', 'sales', 'Recurring Revenues', 'native', False),
     'is_membership_multi': ('crm', 'sales', 'Multi Teams', 'native', False),
-    'group_sale_order_template': ('sale_management', 'sales', 'Quotation Templates', 'page', False),
-    'group_product_pricelist': ('product', 'sales', 'Pricelists', 'page', False),
+    'group_sale_order_template': ('sale_management', 'sales', 'Quotation Templates', 'effect', False),
+    'group_product_pricelist': ('product', 'sales', 'Pricelists', 'effect', False),
     'default_picking_policy': ('sale_stock', 'sales', 'Picking Policy', 'native', False),
     'use_security_lead': ('sale_stock', 'sales', 'Security Lead Time for Sales', 'native', False),
     'security_lead': ('sale_stock', 'sales', 'Security Lead Time (days)', 'native', False),
     # ---- Purchase section
     'days_to_purchase': ('purchase_stock', 'purchase', 'Days to Purchase', 'native', False),
     # ---- Inventory section
-    'group_stock_multi_locations': ('stock', 'inventory', 'Storage Locations', 'page', False),
-    'group_stock_adv_location': ('stock', 'inventory', 'Multi-Step Routes', 'page', False),
+    'group_stock_multi_locations': ('stock', 'inventory', 'Storage Locations', 'effect', False),
+    'group_stock_adv_location': ('stock', 'inventory', 'Multi-Step Routes', 'native', False),
     'group_stock_lot_print_gs1': ('stock', 'inventory', 'Print GS1 Barcodes for Lots & Serial Numbers', 'native',
                                   False),
     'horizon_days': ('stock', 'inventory', 'Replenishment Horizon (days)', 'native', False),
@@ -60,12 +67,12 @@ APP_SETTINGS = {
     'product_weight_in_lbs': ('product', 'inventory', 'Weight unit of measure', 'native', False),
     'product_volume_volume_in_cubic_feet': ('product', 'inventory', 'Volume unit of measure', 'native', False),
     # ---- Business Settings section: the other applications
-    'group_mrp_routings': ('mrp', 'business', 'Work Orders', 'page', False),
-    'group_mrp_workorder_dependencies': ('mrp', 'business', 'Work Order Dependencies', 'page', False),
+    'group_mrp_routings': ('mrp', 'business', 'Work Orders', 'effect', False),
+    'group_mrp_workorder_dependencies': ('mrp', 'business', 'Work Order Dependencies', 'effect', False),
     'group_mrp_byproducts': ('mrp', 'business', 'By-Products', 'native', False),
     'group_unlocked_by_default': ('mrp', 'business', 'Unlock Manufacturing Orders', 'native', False),
     'group_mrp_reception_report': ('mrp', 'business', 'Allocation Report for Manufacturing Orders', 'native', False),
-    'group_project_stages': ('project', 'business', 'Project Stages', 'page', False),
+    'group_project_stages': ('project', 'business', 'Project Stages', 'effect', False),
     'contract_expiration_notice_period': ('hr', 'business', 'Contract Expiry Notice Period (days)', 'native', False),
     'work_permit_expiration_notice_period': ('hr', 'business', 'Work Permit Expiry Notice Period (days)', 'native',
                                              False),
@@ -74,23 +81,23 @@ APP_SETTINGS = {
     'hr_presence_control_email_amount': ('hr', 'business', 'Number of emails', 'native', False),
     'hr_presence_control_ip': ('hr', 'business', 'Presence based on IP address', 'native', False),
     'hr_presence_control_ip_list': ('hr', 'business', 'Valid IP addresses', 'native', False),
-    'attendance_kiosk_mode': ('hr_attendance', 'business', 'Attendance Mode', 'page', False),
-    'attendance_barcode_source': ('hr_attendance', 'business', 'Barcode Source', 'page', False),
-    'attendance_kiosk_delay': ('hr_attendance', 'business', 'Kiosk Delay (seconds)', 'page', False),
-    'attendance_kiosk_use_pin': ('hr_attendance', 'business', 'Employee PIN Identification', 'page', False),
-    'attendance_from_systray': ('hr_attendance', 'business', 'Attendance From Systray', 'page', False),
-    'attendance_device_tracking': ('hr_attendance', 'business', 'Device & Location Tracking', 'page', False),
-    'attendance_overtime_validation': ('hr_attendance', 'business', 'Extra Hours Validation', 'page', False),
-    'hr_attendance_display_overtime': ('hr_attendance', 'business', 'Display Extra Hours', 'page', False),
-    'auto_check_out': ('hr_attendance', 'business', 'Automatic Check Out', 'page', False),
-    'auto_check_out_tolerance': ('hr_attendance', 'business', 'Auto Check Out Tolerance (hours)', 'page', False),
-    'absence_management': ('hr_attendance', 'business', 'Absence Management', 'page', False),
-    'hr_expense_use_mailgateway': ('hr_expense', 'business', 'Record expenses by email', 'page', False),
+    'attendance_kiosk_mode': ('hr_attendance', 'business', 'Attendance Mode', 'native', False),
+    'attendance_barcode_source': ('hr_attendance', 'business', 'Barcode Source', 'native', False),
+    'attendance_kiosk_delay': ('hr_attendance', 'business', 'Kiosk Delay (seconds)', 'native', False),
+    'attendance_kiosk_use_pin': ('hr_attendance', 'business', 'Employee PIN Identification', 'native', False),
+    'attendance_from_systray': ('hr_attendance', 'business', 'Attendance From Systray', 'native', False),
+    'attendance_device_tracking': ('hr_attendance', 'business', 'Device & Location Tracking', 'native', False),
+    'attendance_overtime_validation': ('hr_attendance', 'business', 'Extra Hours Validation', 'native', False),
+    'hr_attendance_display_overtime': ('hr_attendance', 'business', 'Display Extra Hours', 'native', False),
+    'auto_check_out': ('hr_attendance', 'business', 'Automatic Check Out', 'native', False),
+    'auto_check_out_tolerance': ('hr_attendance', 'business', 'Auto Check Out Tolerance (hours)', 'native', False),
+    'absence_management': ('hr_attendance', 'business', 'Absence Management', 'native', False),
+    'hr_expense_use_mailgateway': ('hr_expense', 'business', 'Record expenses by email', 'native', False),
     'group_pos_preset': ('point_of_sale', 'business', 'Presets', 'native', False),
     'update_stock_quantities': ('point_of_sale', 'business', 'Update quantities in stock', 'native', False),
     'point_of_sale_use_ticket_qr_code': ('point_of_sale', 'business', 'Self-service invoicing', 'native', False),
     'point_of_sale_ticket_unique_code': ('point_of_sale', 'business', 'Generate a code on ticket', 'native', False),
-    'group_mass_mailing_campaign': ('mass_mailing', 'business', 'Mailing Campaigns', 'page', False),
+    'group_mass_mailing_campaign': ('mass_mailing', 'business', 'Mailing Campaigns', 'effect', False),
     'show_blacklist_buttons': ('mass_mailing', 'business', 'Blacklist Option when Unsubscribing', 'native', False),
     'mass_mailing_reports': ('mass_mailing', 'business', '24H Stat Mailing Reports', 'native', False),
     'snailmail_color': ('snailmail', 'business', 'Print In Color', 'native', False),
@@ -101,7 +108,6 @@ APP_SETTINGS = {
     'l10n_gcc_dual_language_invoice': ('l10n_gcc_invoice', 'business', 'GCC Formatted Invoices', 'native', True),
     'reconcile_aggregate': ('account_reconcile_oca', 'business', 'Reconcile Aggregate', 'native', True),
 }
-STOCK_PAGE_ROWS = frozenset(('group_stock_multi_locations', 'group_stock_adv_location'))
 APP_MODULES = tuple(sorted({row[0] for row in APP_SETTINGS.values()}))
 
 _TYPES = {
@@ -130,6 +136,46 @@ _TYPES = {
     'l10n_gcc_dual_language_invoice': 'boolean', 'reconcile_aggregate': 'selection',
 }
 
+# Upper bounds of the numeric settings (the native fields have none; the page already refuses a negative number).
+MAXIMUM = {
+    'security_lead': 365, 'days_to_purchase': 365, 'horizon_days': 365,
+    'contract_expiration_notice_period': 365, 'work_permit_expiration_notice_period': 365,
+    'hr_presence_control_email_amount': 1000, 'attendance_kiosk_delay': 3600, 'auto_check_out_tolerance': 24,
+}
+MAX_TEXT = 1000
+
+# The res.company field behind each company setting above (Odoo stores them as related fields): these apply to the
+# CURRENT company only, and only these join the Workspace Administrator's company delegation. Every other row is a
+# feature group or a configuration parameter, tenant-wide in Odoo.
+COMPANY_FIELDS = {
+    'security_lead': 'security_lead', 'days_to_purchase': 'days_to_purchase', 'horizon_days': 'horizon_days',
+    'stock_move_email_validation': 'stock_move_email_validation',
+    'contract_expiration_notice_period': 'contract_expiration_notice_period',
+    'work_permit_expiration_notice_period': 'work_permit_expiration_notice_period',
+    'hr_presence_control_login': 'hr_presence_control_login', 'hr_presence_control_email': 'hr_presence_control_email',
+    'hr_presence_control_email_amount': 'hr_presence_control_email_amount',
+    'hr_presence_control_ip': 'hr_presence_control_ip', 'hr_presence_control_ip_list': 'hr_presence_control_ip_list',
+    'attendance_kiosk_mode': 'attendance_kiosk_mode', 'attendance_barcode_source': 'attendance_barcode_source',
+    'attendance_kiosk_delay': 'attendance_kiosk_delay', 'attendance_kiosk_use_pin': 'attendance_kiosk_use_pin',
+    'attendance_from_systray': 'attendance_from_systray', 'attendance_device_tracking': 'attendance_device_tracking',
+    'attendance_overtime_validation': 'attendance_overtime_validation',
+    'hr_attendance_display_overtime': 'hr_attendance_display_overtime', 'auto_check_out': 'auto_check_out',
+    'auto_check_out_tolerance': 'auto_check_out_tolerance', 'absence_management': 'absence_management',
+    'update_stock_quantities': 'point_of_sale_update_stock_quantities',
+    'point_of_sale_use_ticket_qr_code': 'point_of_sale_use_ticket_qr_code',
+    'point_of_sale_ticket_unique_code': 'point_of_sale_ticket_unique_code',
+    'snailmail_color': 'snailmail_color', 'snailmail_cover': 'snailmail_cover', 'snailmail_duplex': 'snailmail_duplex',
+    'vat_check_vies': 'vat_check_vies', 'l10n_gcc_dual_language_invoice': 'l10n_gcc_dual_language_invoice',
+    'reconcile_aggregate': 'reconcile_aggregate',
+}
+TENANT_WIDE = frozenset(name for name in APP_SETTINGS if name not in COMPANY_FIELDS)
+ADMIN_ONLY_COMPANY_FIELDS = frozenset(COMPANY_FIELDS[name] for name, row in APP_SETTINGS.items()
+                                      if row[4] and name in COMPANY_FIELDS)
+# the Settings section of each company field (settings_policy.company_field_section), so a delegate of Sales /
+# Purchase / Inventory Settings may change exactly its own section's fields
+COMPANY_FIELD_SECTION.update({field: APP_SETTINGS[name][1] for name, field in COMPANY_FIELDS.items()
+                              if APP_SETTINGS[name][1] != 'business'})
+
 
 def _native_selection(name):
     """The native field's own options, read at runtime; none while its module is not installed."""
@@ -139,8 +185,13 @@ def _native_selection(name):
     return selection
 
 
-def _declare(name):
+def _label(name):
     label = APP_SETTINGS[name][2]
+    return '%s (all companies)' % label if name in TENANT_WIDE else label
+
+
+def _declare(name):
+    label = _label(name)
     kind = _TYPES[name]
     if kind == 'selection':
         return fields.Selection(_native_selection(name), string=label)
@@ -178,7 +229,7 @@ class NcBusinessSettings(models.TransientModel):
     def _nc_settings_spec(self):
         spec = super()._nc_settings_spec()
         for name, row in self._nc_app_settings().items():
-            spec[name] = 'native' if row[3] == 'native' else 'settings_page'
+            spec[name] = 'native' if row[3] == 'native' else '_nc_set_%s' % name
         return spec
 
     @api.model
@@ -191,59 +242,108 @@ class NcBusinessSettings(models.TransientModel):
         row = APP_SETTINGS.get(name)
         if row and row[4] and not (self.env.su or self.env.user.has_group(TENANT_ADMIN)):
             raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))
-        return super()._nc_check_value(name, value)
+        result = super()._nc_check_value(name, value)
+        string = self.env['res.config.settings']._fields[name].string
+        if name in MAXIMUM and (value or 0) > MAXIMUM[name]:
+            raise ValidationError(self.env._("%(setting)s cannot be more than %(maximum)s.", setting=string,
+                                             maximum=MAXIMUM[name]))
+        if row and _TYPES[name] == 'char' and value and len(value) > MAX_TEXT:
+            raise ValidationError(self.env._("%(setting)s is too long.", setting=string))
+        return result
 
-    def _nc_apply_via_settings_page(self, company, values):
-        """Odoo's own ``set_values``, ONCE per save, on a settings record of THIS company holding today's values plus
-        the changed ones: the modules' side effects run exactly as on Odoo's own settings page (which also runs every
-        installed module's ``set_values`` on each Save). Elevated only here, after the level, type and administrator
-        checks of ``action_nc_save``; never ``execute()``.
+    # ------------------------------------------------------------------ settings with a side effect
+    # Each one runs only when the value changed (action_nc_save skips unchanged values), after the section level,
+    # type and administrator checks. The setting itself is applied where Odoo stores it (_nc_apply_native); the
+    # side effect is the one Odoo's own set_values attaches to THIS setting, nothing else.
 
-        Two guards on top of Odoo's own behaviour:
-          * Inventory's ``set_values`` skips its side effects (operation types, locations) for a user who is not an
-            Inventory Manager, which would leave the group switched with the data unchanged: refused instead;
-          * Odoo's base ``set_values`` re-normalises EVERY configuration parameter of the page ('5' -> '5.0', '0' ->
-            deleted): any parameter other than the ones of the settings changed here is put back as it was."""
-        if set(values) & STOCK_PAGE_ROWS and not self.env.user.has_group('stock.group_stock_manager'):
+    def _nc_set_group_use_lead(self, company, value):
+        """crm: every team that uses opportunities follows the Leads switch, and its mail alias is refreshed."""
+        self._nc_apply_native(company, 'group_use_lead', value)
+        teams = self.env['crm.team'].sudo().search([])
+        teams.filtered('use_opportunities').use_leads = value
+        for team in teams:
+            team.alias_id.write(team._alias_get_creation_values())
+
+    def _nc_set_group_sale_order_template(self, company, value):
+        """sale_management: with templates off, no company keeps a default template (they could no longer be seen)."""
+        if not value:
+            self.env['res.company'].sudo().search([('sale_order_template_id', '!=', False)]).write(
+                {'sale_order_template_id': False})
+        self._nc_apply_native(company, 'group_sale_order_template', value)
+
+    def _nc_set_group_product_pricelist(self, company, value):
+        """product: switching on creates / reactivates each company's default pricelist (Odoo's own helper).
+        Switching off would make Odoo archive EVERY pricelist; instead it is refused while a pricelist that changes
+        prices (rules, or another currency) is active, and nothing is archived: an empty pricelist in the company's
+        currency prices exactly like no pricelist."""
+        if value:
+            self._nc_apply_native(company, 'group_product_pricelist', value)
+            self.env['res.company'].sudo()._activate_or_create_pricelists()
+            return
+        pricing = self.env['product.pricelist'].sudo().search([]).filtered(
+            lambda pl: pl.item_ids or pl.currency_id != (pl.company_id or company).currency_id)
+        if pricing:
+            raise UserError(self.env._(
+                "Pricelists cannot be switched off while pricelists with price rules or another currency are active "
+                "(%(names)s). Archive them in Sales > Products > Pricelists first.",
+                names=', '.join(pricing[:5].mapped('display_name'))))
+        self._nc_apply_native(company, 'group_product_pricelist', value)
+
+    def _nc_set_group_stock_multi_locations(self, company, value):
+        """stock: the warehouses' internal operation type and the location screens follow Storage Locations, exactly
+        as in Odoo; an Inventory Manager only (Odoo skips that part for anyone else, leaving a half-applied
+        setting)."""
+        if not self.env.user.has_group(STOCK_MANAGER):
             raise AccessError(self.env._(
-                "Only an Inventory Manager can change the warehouse structure (storage locations and routes)."))
-        native = self.env['res.config.settings']._fields
-        own_keys = {getattr(native[name], 'config_parameter', None) for name in values} - {None}
-        params = self.env['ir.config_parameter'].sudo()
-        before = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
-        page = self.env['res.config.settings'].sudo().with_company(company).with_context(
-            allowed_company_ids=[company.id]).create(dict(values))
-        page.set_values()
-        after = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
-        for key in (set(before) | set(after)) - own_keys:
-            if before.get(key) != after.get(key):
-                params.set_param(key, before.get(key, False))
+                "Only an Inventory Manager can change the warehouse structure (storage locations)."))
+        implied = self.env.ref('base.group_user').implied_ids
+        if not value and self.env.ref('stock.group_stock_multi_warehouses') in implied:
+            raise UserError(self.env._(
+                "You can't deactivate the multi-location if you have more than once warehouse by company"))
+        self._nc_apply_native(company, 'group_stock_multi_locations', value)
+        warehouses = self.env['stock.warehouse'].sudo().with_context(active_test=True)
+        views = [self.env.ref(xmlid, raise_if_not_found=False) for xmlid in (
+            'stock.stock_location_view_tree2_editable', 'stock.stock_location_view_form_editable')]
+        if value:
+            warehouses.search([]).int_type_id.active = True
+        else:
+            warehouses.search([('reception_steps', '=', 'one_step'),
+                               ('delivery_steps', '=', 'ship_only')]).int_type_id.active = False
+        for view in views:
+            if view:
+                view.sudo().active = not value
 
+    def _nc_set_group_mrp_routings(self, company, value):
+        """mrp: switching Work Orders off would make Odoo archive EVERY operation of every bill of materials;
+        refused instead while operations are active (archive them on the bill of materials, deliberately)."""
+        if not value and self.env['mrp.routing.workcenter'].sudo().search_count([], limit=1):
+            raise UserError(self.env._(
+                "Work Orders cannot be switched off while bills of materials have operations. Remove or archive the "
+                "operations first."))
+        self._nc_apply_native(company, 'group_mrp_routings', value)
 
-# The res.company field behind each 'native' company setting above (Odoo stores them as related fields). Only these
-# join the Workspace Administrator's company delegation; 'page' rows are applied by Odoo's own set_values and are
-# never writable on res.company directly.
-COMPANY_FIELDS = {
-    'security_lead': 'security_lead', 'days_to_purchase': 'days_to_purchase', 'horizon_days': 'horizon_days',
-    'stock_move_email_validation': 'stock_move_email_validation',
-    'contract_expiration_notice_period': 'contract_expiration_notice_period',
-    'work_permit_expiration_notice_period': 'work_permit_expiration_notice_period',
-    'hr_presence_control_login': 'hr_presence_control_login', 'hr_presence_control_email': 'hr_presence_control_email',
-    'hr_presence_control_email_amount': 'hr_presence_control_email_amount',
-    'hr_presence_control_ip': 'hr_presence_control_ip', 'hr_presence_control_ip_list': 'hr_presence_control_ip_list',
-    'update_stock_quantities': 'point_of_sale_update_stock_quantities',
-    'point_of_sale_use_ticket_qr_code': 'point_of_sale_use_ticket_qr_code',
-    'point_of_sale_ticket_unique_code': 'point_of_sale_ticket_unique_code',
-    'snailmail_color': 'snailmail_color', 'snailmail_cover': 'snailmail_cover', 'snailmail_duplex': 'snailmail_duplex',
-    'vat_check_vies': 'vat_check_vies', 'l10n_gcc_dual_language_invoice': 'l10n_gcc_dual_language_invoice',
-    'reconcile_aggregate': 'reconcile_aggregate',
-}
-ADMIN_ONLY_COMPANY_FIELDS = frozenset(COMPANY_FIELDS[name] for name, row in APP_SETTINGS.items()
-                                      if row[4] and name in COMPANY_FIELDS)
-# the Settings section of each company field (settings_policy.company_field_section), so a delegate of Sales /
-# Purchase / Inventory Settings may change exactly its own section's fields
-COMPANY_FIELD_SECTION.update({field: APP_SETTINGS[name][1] for name, field in COMPANY_FIELDS.items()
-                              if APP_SETTINGS[name][1] != 'business'})
+    def _nc_set_group_mrp_workorder_dependencies(self, company, value):
+        """mrp: switching dependencies off would make Odoo clear them on every bill of materials; refused instead."""
+        if not value and self.env['mrp.bom'].sudo().search_count([('allow_operation_dependencies', '=', True)],
+                                                                 limit=1):
+            raise UserError(self.env._(
+                "Work Order Dependencies cannot be switched off while bills of materials use them. Turn them off on "
+                "those bills of materials first."))
+        self._nc_apply_native(company, 'group_mrp_workorder_dependencies', value)
+
+    def _nc_set_group_project_stages(self, company, value):
+        """project: the "Project Stage Changed" message type is shown only while stages are in use."""
+        self._nc_apply_native(company, 'group_project_stages', value)
+        subtype = self.env.ref('project.mt_project_stage_change', raise_if_not_found=False)
+        if subtype and subtype.hidden == value:
+            subtype.sudo().hidden = not value
+
+    def _nc_set_group_mass_mailing_campaign(self, company, value):
+        """mass_mailing: the A/B testing scheduler runs only while campaigns are in use."""
+        self._nc_apply_native(company, 'group_mass_mailing_campaign', value)
+        cron = self.env.ref('mass_mailing.ir_cron_mass_mailing_ab_testing', raise_if_not_found=False)
+        if cron and cron.active != value:
+            cron.sudo().active = value
 
 
 class ResCompany(models.Model):

@@ -3717,8 +3717,8 @@ msgstr "«%(text)s» ليس نصًا من نصوص هذه الشاشة بهذه 
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__mass_mailing_reports
-msgid "24H Stat Mailing Reports"
-msgstr "تقارير إحصاءات الحملات خلال 24 ساعة"
+msgid "24H Stat Mailing Reports (all companies)"
+msgstr "تقارير إحصاءات الحملات خلال 24 ساعة (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -3737,8 +3737,8 @@ msgstr "إضافة صفحة غلاف"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_reception_report
-msgid "Allocation Report for Manufacturing Orders"
-msgstr "تقرير التخصيص لأوامر التصنيع"
+msgid "Allocation Report for Manufacturing Orders (all companies)"
+msgstr "تقرير التخصيص لأوامر التصنيع (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_from_systray
@@ -3772,13 +3772,13 @@ msgstr "مصدر الباركود"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__show_blacklist_buttons
-msgid "Blacklist Option when Unsubscribing"
-msgstr "خيار القائمة السوداء عند إلغاء الاشتراك"
+msgid "Blacklist Option when Unsubscribing (all companies)"
+msgstr "خيار القائمة السوداء عند إلغاء الاشتراك (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_byproducts
-msgid "By-Products"
-msgstr "المنتجات الثانوية"
+msgid "By-Products (all companies)"
+msgstr "المنتجات الثانوية (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -3823,8 +3823,8 @@ msgstr "عرض الساعات الإضافية"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_lot_on_invoice
-msgid "Display Lots & Serial Numbers on Invoices"
-msgstr "عرض الدفعات والأرقام التسلسلية في الفواتير"
+msgid "Display Lots & Serial Numbers on Invoices (all companies)"
+msgstr "عرض الدفعات والأرقام التسلسلية في الفواتير (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -3889,13 +3889,13 @@ msgstr "تأخير الكشك (ثوانٍ)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_use_lead
-msgid "Leads"
-msgstr "العملاء المحتملون"
+msgid "Leads (all companies)"
+msgstr "العملاء المحتملون (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mass_mailing_campaign
-msgid "Mailing Campaigns"
-msgstr "الحملات البريدية"
+msgid "Mailing Campaigns (all companies)"
+msgstr "الحملات البريدية (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -3909,13 +3909,13 @@ msgstr "التصنيع"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__is_membership_multi
-msgid "Multi Teams"
-msgstr "فرق متعددة"
+msgid "Multi Teams (all companies)"
+msgstr "فرق متعددة (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_stock_adv_location
-msgid "Multi-Step Routes"
-msgstr "مسارات متعددة الخطوات"
+msgid "Multi-Step Routes (all companies)"
+msgstr "مسارات متعددة الخطوات (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__nc_apps
@@ -3940,8 +3940,8 @@ msgstr "العمليات"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__default_picking_policy
-msgid "Picking Policy"
-msgstr "سياسة التسليم"
+msgid "Picking Policy (all companies)"
+msgstr "سياسة التسليم (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -3980,13 +3980,13 @@ msgstr "التواجد حسب حالة المستخدم"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_pos_preset
-msgid "Presets"
-msgstr "الإعدادات المسبقة"
+msgid "Presets (all companies)"
+msgstr "الإعدادات المسبقة (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_product_pricelist
-msgid "Pricelists"
-msgstr "قوائم الأسعار"
+msgid "Pricelists (all companies)"
+msgstr "قوائم الأسعار (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__snailmail_duplex
@@ -3995,8 +3995,8 @@ msgstr "الطباعة على الوجهين"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_stock_lot_print_gs1
-msgid "Print GS1 Barcodes for Lots & Serial Numbers"
-msgstr "طباعة باركود GS1 للدفعات والأرقام التسلسلية"
+msgid "Print GS1 Barcodes for Lots & Serial Numbers (all companies)"
+msgstr "طباعة باركود GS1 للدفعات والأرقام التسلسلية (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__snailmail_color
@@ -4015,8 +4015,8 @@ msgstr "المشاريع"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_project_stages
-msgid "Project Stages"
-msgstr "مراحل المشروع"
+msgid "Project Stages (all companies)"
+msgstr "مراحل المشروع (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -4025,8 +4025,8 @@ msgstr "تأهيل الطلبات الواردة كعملاء محتملين ق�
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_sale_order_template
-msgid "Quotation Templates"
-msgstr "قوالب عروض الأسعار"
+msgid "Quotation Templates (all companies)"
+msgstr "قوالب عروض الأسعار (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__reconcile_aggregate
@@ -4035,13 +4035,13 @@ msgstr "تجميع التسوية"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_expense_use_mailgateway
-msgid "Record expenses by email"
-msgstr "تسجيل المصروفات بالبريد الإلكتروني"
+msgid "Record expenses by email (all companies)"
+msgstr "تسجيل المصروفات بالبريد الإلكتروني (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_use_recurring_revenues
-msgid "Recurring Revenues"
-msgstr "الإيرادات المتكررة"
+msgid "Recurring Revenues (all companies)"
+msgstr "الإيرادات المتكررة (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -4060,8 +4060,8 @@ msgstr "مهلة الأمان (أيام)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__use_security_lead
-msgid "Security Lead Time for Sales"
-msgstr "مهلة الأمان للمبيعات"
+msgid "Security Lead Time for Sales (all companies)"
+msgstr "مهلة الأمان للمبيعات (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__point_of_sale_use_ticket_qr_code
@@ -4080,8 +4080,8 @@ msgstr "المتاجر"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_stock_multi_locations
-msgid "Storage Locations"
-msgstr "مواقع التخزين"
+msgid "Storage Locations (all companies)"
+msgstr "مواقع التخزين (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
@@ -4095,8 +4095,8 @@ msgstr "تتبع الإيرادات المتكررة في الفرص."
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_unlocked_by_default
-msgid "Unlock Manufacturing Orders"
-msgstr "إلغاء قفل أوامر التصنيع"
+msgid "Unlock Manufacturing Orders (all companies)"
+msgstr "إلغاء قفل أوامر التصنيع (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__update_stock_quantities
@@ -4115,23 +4115,23 @@ msgstr "التحقق من أرقام ضريبة القيمة المضافة"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__product_volume_volume_in_cubic_feet
-msgid "Volume unit of measure"
-msgstr "وحدة قياس الحجم"
+msgid "Volume unit of measure (all companies)"
+msgstr "وحدة قياس الحجم (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__product_weight_in_lbs
-msgid "Weight unit of measure"
-msgstr "وحدة قياس الوزن"
+msgid "Weight unit of measure (all companies)"
+msgstr "وحدة قياس الوزن (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_workorder_dependencies
-msgid "Work Order Dependencies"
-msgstr "اعتماديات أوامر العمل"
+msgid "Work Order Dependencies (all companies)"
+msgstr "اعتماديات أوامر العمل (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_routings
-msgid "Work Orders"
-msgstr "أوامر العمل"
+msgid "Work Orders (all companies)"
+msgstr "أوامر العمل (لجميع الشركات)"
 
 #. module: ncollection_core
 #: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__work_permit_expiration_notice_period
@@ -4142,3 +4142,45 @@ msgstr "مهلة التنبيه بانتهاء تصريح العمل (أيام)"
 #: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
 msgid "e.g. 10.0.0.1, 10.0.0.2"
 msgstr "مثال: 10.0.0.1، 10.0.0.2"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "%(setting)s cannot be more than %(maximum)s."
+msgstr "لا يمكن أن يتجاوز %(setting)s القيمة %(maximum)s."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "%(setting)s is too long."
+msgstr "%(setting)s طويل جدًا."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "Pricelists cannot be switched off while pricelists with price rules or another currency are active (%(names)s). Archive them in Sales > Products > Pricelists first."
+msgstr "لا يمكن إيقاف قوائم الأسعار ما دامت هناك قوائم أسعار نشطة تحتوي على قواعد تسعير أو بعملة أخرى (%(names)s). أرشفها أولًا من المبيعات > المنتجات > قوائم الأسعار."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "Only an Inventory Manager can change the warehouse structure (storage locations)."
+msgstr "يمكن لمدير المخزون فقط تغيير هيكل المستودع (مواقع التخزين)."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "You can't deactivate the multi-location if you have more than once warehouse by company"
+msgstr "لا يمكنك إيقاف تعدد المواقع إذا كان لديك أكثر من مستودع لكل شركة"
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "Work Orders cannot be switched off while bills of materials have operations. Remove or archive the operations first."
+msgstr "لا يمكن إيقاف أوامر العمل ما دامت قوائم المواد تحتوي على عمليات. احذف العمليات أو أرشفها أولًا."
+
+#. module: ncollection_core
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+#, python-format
+msgid "Work Order Dependencies cannot be switched off while bills of materials use them. Turn them off on those bills of materials first."
+msgstr "لا يمكن إيقاف تبعيات أوامر العمل ما دامت قوائم المواد تستخدمها. أوقفها في قوائم المواد تلك أولًا."
