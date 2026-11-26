@@ -259,7 +259,7 @@ class NcBusinessSettings(models.TransientModel):
     def _nc_set_group_use_lead(self, company, value):
         """crm: every team that uses opportunities follows the Leads switch, and its mail alias is refreshed."""
         self._nc_apply_native(company, 'group_use_lead', value)
-        teams = self.env['crm.team'].sudo().search([])
+        teams = self.env['crm.team'].sudo().search([('id', '!=', False)])
         teams.filtered('use_opportunities').use_leads = value
         for team in teams:
             team.alias_id.write(team._alias_get_creation_values())
@@ -280,7 +280,7 @@ class NcBusinessSettings(models.TransientModel):
             self._nc_apply_native(company, 'group_product_pricelist', value)
             self.env['res.company'].sudo()._activate_or_create_pricelists()
             return
-        pricing = self.env['product.pricelist'].sudo().search([]).filtered(
+        pricing = self.env['product.pricelist'].sudo().search([('id', '!=', False)]).filtered(
             lambda pl: pl.item_ids or pl.currency_id != (pl.company_id or company).currency_id)
         if pricing:
             raise UserError(self.env._(
@@ -305,7 +305,7 @@ class NcBusinessSettings(models.TransientModel):
         views = [self.env.ref(xmlid, raise_if_not_found=False) for xmlid in (
             'stock.stock_location_view_tree2_editable', 'stock.stock_location_view_form_editable')]
         if value:
-            warehouses.search([]).int_type_id.active = True
+            warehouses.search([('id', '!=', False)]).int_type_id.active = True
         else:
             warehouses.search([('reception_steps', '=', 'one_step'),
                                ('delivery_steps', '=', 'ship_only')]).int_type_id.active = False
@@ -346,7 +346,8 @@ class NcBusinessSettings(models.TransientModel):
             cron.sudo().active = value
 
 
-class ResCompany(models.Model):
+# the company side of THIS table, kept next to it rather than merged into res_company_delegation.py
+class ResCompany(models.Model):  # pylint: disable=consider-merging-classes-inherited
     _inherit = 'res.company'
 
     @api.model

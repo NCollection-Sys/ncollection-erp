@@ -109,10 +109,11 @@ class TestAppSettings(TransactionCase):
             self.env['product.pricelist'].create({'name': 'App settings priced', 'item_ids': [(0, 0, {
                 'compute_price': 'percentage', 'percent_price': 10})]})
             active = self.env['product.pricelist'].search([])
-        try:
-            self._settings(self.owner, group_product_pricelist=not start).action_nc_save()
-        except UserError:
-            pass                            # switching off is refused while a priced list exists (asserted below)
+        if start:                           # switching off is refused while a priced list exists
+            with self.assertRaises(UserError):
+                self._settings(self.owner, group_product_pricelist=False).action_nc_save()
+        else:
+            self._settings(self.owner, group_product_pricelist=True).action_nc_save()
         after = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
         self.assertEqual(before, after)
         self.assertLessEqual(active, self.env['product.pricelist'].search([]))
