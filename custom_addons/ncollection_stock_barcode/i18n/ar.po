@@ -546,3 +546,13 @@ msgstr "إعدادات الأعمال"
 #: model:ir.model,name:ncollection_stock_barcode.model_res_company
 msgid "Companies"
 msgstr "الشركات"
+
+#. module: ncollection_stock_barcode
+#: model_terms:ir.ui.view,arch_db:ncollection_stock_barcode.view_nc_business_settings_form_inventory_apps
+msgid "Units of Measure"
+msgstr "وحدات القياس"
+
+#. module: ncollection_stock_barcode
+#: model_terms:ir.ui.view,arch_db:ncollection_stock_barcode.view_nc_business_settings_form_inventory_apps
+msgid "Warehouse"
+msgstr "المستودع"

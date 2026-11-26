@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Settings of OPTIONAL applications (wizards/app_settings.py). Each app / block shows only while its module is
+         installed for this tenant (nc_apps) and its section is not hidden; read-only at the "view" level. The server
+         offers and accepts a setting only while its module is installed, and checks the section level again. -->
+    <record id="view_nc_business_settings_form_apps" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.apps</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="view_nc_business_settings_form"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='nc_can_delegate']" position="after">
+                <field name="nc_apps" invisible="1"/>
+            </xpath>
+            <xpath expr="//app[@name='nc_general_settings']" position="inside">
+                <block title="Documents by Post" name="nc_snailmail" invisible="' snailmail ' not in nc_apps or nc_level_business == 'hidden'">
+                    <setting id="nc_snailmail_color"><field name="snailmail_color" readonly="nc_level_business == 'view'"/></setting>
+                    <setting id="nc_snailmail_cover"><field name="snailmail_cover" readonly="nc_level_business == 'view'"/></setting>
+                    <setting id="nc_snailmail_duplex"><field name="snailmail_duplex" readonly="nc_level_business == 'view'"/></setting>
+                </block>
+            </xpath>
+            <xpath expr="//form" position="inside">
+                <app data-string="CRM" string="CRM" name="crm" invisible="' crm ' not in nc_apps or nc_level_sales == 'hidden'">
+                    <block title="Pipeline">
+                        <setting id="nc_group_use_lead" help="Qualify incoming requests as leads before they become opportunities."><field name="group_use_lead" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_group_use_recurring_revenues" help="Track recurring revenue on opportunities."><field name="group_use_recurring_revenues" readonly="nc_level_sales == 'view'"/></setting>
+                        <setting id="nc_is_membership_multi" help="A salesperson may belong to several sales teams."><field name="is_membership_multi" readonly="nc_level_sales == 'view'"/></setting>
+                    </block>
+                </app>
+                <app data-string="Manufacturing" string="Manufacturing" name="mrp" invisible="' mrp ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Operations">
+                        <setting id="nc_group_mrp_routings" help="Process operations at work centers."><field name="group_mrp_routings" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_mrp_workorder_dependencies" invisible="not group_mrp_routings"><field name="group_mrp_workorder_dependencies" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_mrp_byproducts"><field name="group_mrp_byproducts" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_unlocked_by_default"><field name="group_unlocked_by_default" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_mrp_reception_report"><field name="group_mrp_reception_report" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                </app>
+                <app data-string="Project" string="Project" name="project" invisible="' project ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Tasks Management">
+                        <setting id="nc_group_project_stages"><field name="group_project_stages" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                </app>
+                <app data-string="Employees" string="Employees" name="hr" invisible="' hr ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Presence">
+                        <setting id="nc_hr_presence_control_login"><field name="hr_presence_control_login" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_hr_presence_control_email"><field name="hr_presence_control_email" readonly="nc_level_business == 'view'"/>
+                            <div class="mt-2" invisible="not hr_presence_control_email"><field name="hr_presence_control_email_amount" readonly="nc_level_business == 'view'"/></div></setting>
+                        <setting id="nc_hr_presence_control_ip"><field name="hr_presence_control_ip" readonly="nc_level_business == 'view'"/>
+                            <div class="mt-2" invisible="not hr_presence_control_ip"><field name="hr_presence_control_ip_list" placeholder="e.g. 10.0.0.1, 10.0.0.2" readonly="nc_level_business == 'view'"/></div></setting>
+                    </block>
+                    <block title="Reminders">
+                        <setting id="nc_contract_expiration_notice_period"><field name="contract_expiration_notice_period" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_work_permit_expiration_notice_period"><field name="work_permit_expiration_notice_period" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                </app>
+                <app data-string="Attendances" string="Attendances" name="hr_attendance" invisible="' hr_attendance ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Check In / Check Out">
+                        <setting id="nc_attendance_kiosk_mode"><field name="attendance_kiosk_mode" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_attendance_barcode_source" invisible="attendance_kiosk_mode == 'manual'"><field name="attendance_barcode_source" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_attendance_kiosk_delay"><field name="attendance_kiosk_delay" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_attendance_kiosk_use_pin"><field name="attendance_kiosk_use_pin" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_attendance_from_systray"><field name="attendance_from_systray" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_attendance_device_tracking"><field name="attendance_device_tracking" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_auto_check_out"><field name="auto_check_out" readonly="nc_level_business == 'view'"/>
+                            <div class="mt-2" invisible="not auto_check_out"><field name="auto_check_out_tolerance" readonly="nc_level_business == 'view'"/></div></setting>
+                    </block>
+                    <block title="Extra Hours">
+                        <setting id="nc_attendance_overtime_validation"><field name="attendance_overtime_validation" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_hr_attendance_display_overtime"><field name="hr_attendance_display_overtime" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_absence_management"><field name="absence_management" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                </app>
+                <app data-string="Expenses" string="Expenses" name="hr_expense" invisible="' hr_expense ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Expenses">
+                        <setting id="nc_hr_expense_use_mailgateway"><field name="hr_expense_use_mailgateway" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                </app>
+                <app data-string="Point of Sale" string="Point of Sale" name="point_of_sale" invisible="' point_of_sale ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Company-wide">
+                        <setting id="nc_update_stock_quantities"><field name="update_stock_quantities" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_group_pos_preset"><field name="group_pos_preset" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_point_of_sale_use_ticket_qr_code"><field name="point_of_sale_use_ticket_qr_code" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_point_of_sale_ticket_unique_code"><field name="point_of_sale_ticket_unique_code" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                    <block title="Shops">
+                        <setting id="nc_pos_shops" string="Shop configuration" help="Each shop's payment methods, receipts, pricing and hardware are set on the shop itself, by Point of Sale managers.">
+                            <div class="text-muted small">Point of Sale &gt; Configuration &gt; Settings</div>
+                        </setting>
+                    </block>
+                </app>
+                <app data-string="Email Marketing" string="Email Marketing" name="mass_mailing" invisible="' mass_mailing ' not in nc_apps or nc_level_business == 'hidden'">
+                    <block title="Mailings">
+                        <setting id="nc_group_mass_mailing_campaign"><field name="group_mass_mailing_campaign" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_show_blacklist_buttons"><field name="show_blacklist_buttons" readonly="nc_level_business == 'view'"/></setting>
+                        <setting id="nc_mass_mailing_reports"><field name="mass_mailing_reports" readonly="nc_level_business == 'view'"/></setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

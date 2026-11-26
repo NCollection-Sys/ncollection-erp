@@ -375,6 +375,7 @@ msgstr "نوع الخطأ"
 #. module: ncollection_core
 #. odoo-python
 #: code:addons/ncollection_core/models/dashboard/dashboard_data.py:0
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
 msgid "Expenses"
 msgstr "المصروفات"
 
@@ -3713,3 +3714,431 @@ msgstr "أدوار مساحة العمل (الأدوار والصلاحيات) �
 #: code:addons/ncollection_core/models/label_override.py:0
 msgid "“%(text)s” is not a text of this screen in this language."
 msgstr "«%(text)s» ليس نصًا من نصوص هذه الشاشة بهذه اللغة."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__mass_mailing_reports
+msgid "24H Stat Mailing Reports"
+msgstr "تقارير إحصاءات الحملات خلال 24 ساعة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "A salesperson may belong to several sales teams."
+msgstr "يمكن لمندوب المبيعات الانتماء إلى عدة فرق مبيعات."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__absence_management
+msgid "Absence Management"
+msgstr "إدارة الغياب"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__snailmail_cover
+msgid "Add a Cover Page"
+msgstr "إضافة صفحة غلاف"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_reception_report
+msgid "Allocation Report for Manufacturing Orders"
+msgstr "تقرير التخصيص لأوامر التصنيع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_from_systray
+msgid "Attendance From Systray"
+msgstr "تسجيل الحضور من شريط النظام"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_kiosk_mode
+msgid "Attendance Mode"
+msgstr "وضع الحضور"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Attendances"
+msgstr "الحضور"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__auto_check_out_tolerance
+msgid "Auto Check Out Tolerance (hours)"
+msgstr "مهلة تسجيل الخروج التلقائي (ساعات)"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__auto_check_out
+msgid "Automatic Check Out"
+msgstr "تسجيل الخروج التلقائي"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_barcode_source
+msgid "Barcode Source"
+msgstr "مصدر الباركود"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__show_blacklist_buttons
+msgid "Blacklist Option when Unsubscribing"
+msgstr "خيار القائمة السوداء عند إلغاء الاشتراك"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_byproducts
+msgid "By-Products"
+msgstr "المنتجات الثانوية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "CRM"
+msgstr "إدارة علاقات العملاء"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Check In / Check Out"
+msgstr "تسجيل الدخول / الخروج"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/app_sidebar/app_sidebar.js:0 code:addons/ncollection_core/static/src/app_sidebar/app_sidebar.xml:0
+msgid "Collapse menu"
+msgstr "طي القائمة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Company-wide"
+msgstr "على مستوى الشركة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__contract_expiration_notice_period
+msgid "Contract Expiry Notice Period (days)"
+msgstr "مهلة التنبيه بانتهاء العقد (أيام)"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__days_to_purchase
+msgid "Days to Purchase"
+msgstr "أيام الشراء"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_device_tracking
+msgid "Device & Location Tracking"
+msgstr "تتبع الجهاز والموقع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_attendance_display_overtime
+msgid "Display Extra Hours"
+msgstr "عرض الساعات الإضافية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_lot_on_invoice
+msgid "Display Lots & Serial Numbers on Invoices"
+msgstr "عرض الدفعات والأرقام التسلسلية في الفواتير"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Documents by Post"
+msgstr "المستندات بالبريد"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Each shop's payment methods, receipts, pricing and hardware are set on the shop itself, by Point of Sale managers."
+msgstr "تُضبط طرق الدفع والإيصالات والتسعير والأجهزة لكل متجر في المتجر نفسه، بواسطة مديري نقاط البيع."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__stock_move_email_validation
+msgid "Email Confirmation of Deliveries"
+msgstr "تأكيد التسليم بالبريد الإلكتروني"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Email Marketing"
+msgstr "التسويق عبر البريد الإلكتروني"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_kiosk_use_pin
+msgid "Employee PIN Identification"
+msgstr "التعريف برمز الموظف السري"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Employees"
+msgstr "الموظفون"
+
+#. module: ncollection_core
+#. odoo-javascript
+#: code:addons/ncollection_core/static/src/app_sidebar/app_sidebar.js:0
+msgid "Expand menu"
+msgstr "توسيع القائمة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Extra Hours"
+msgstr "الساعات الإضافية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_overtime_validation
+msgid "Extra Hours Validation"
+msgstr "اعتماد الساعات الإضافية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__l10n_gcc_dual_language_invoice
+msgid "GCC Formatted Invoices"
+msgstr "فواتير بتنسيق دول الخليج"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__point_of_sale_ticket_unique_code
+msgid "Generate a code on ticket"
+msgstr "إنشاء رمز على الإيصال"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__attendance_kiosk_delay
+msgid "Kiosk Delay (seconds)"
+msgstr "تأخير الكشك (ثوانٍ)"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_use_lead
+msgid "Leads"
+msgstr "العملاء المحتملون"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mass_mailing_campaign
+msgid "Mailing Campaigns"
+msgstr "الحملات البريدية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Mailings"
+msgstr "الرسائل البريدية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Manufacturing"
+msgstr "التصنيع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__is_membership_multi
+msgid "Multi Teams"
+msgstr "فرق متعددة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_stock_adv_location
+msgid "Multi-Step Routes"
+msgstr "مسارات متعددة الخطوات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__nc_apps
+msgid "Nc Apps"
+msgstr "التطبيقات المثبتة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_presence_control_email_amount
+msgid "Number of emails"
+msgstr "عدد الرسائل"
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+msgid "Only a workspace administrator can change the accounting settings."
+msgstr "لا يمكن تغيير الإعدادات المحاسبية إلا لمسؤول مساحة العمل."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Operations"
+msgstr "العمليات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__default_picking_policy
+msgid "Picking Policy"
+msgstr "سياسة التسليم"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Pipeline"
+msgstr "مسار المبيعات"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Point of Sale"
+msgstr "نقطة البيع"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Point of Sale &gt; Configuration &gt; Settings"
+msgstr "نقطة البيع &gt; التهيئة &gt; الإعدادات"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Presence"
+msgstr "التواجد"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_presence_control_ip
+msgid "Presence based on IP address"
+msgstr "التواجد حسب عنوان IP"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_presence_control_email
+msgid "Presence based on emails sent"
+msgstr "التواجد حسب الرسائل المرسلة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_presence_control_login
+msgid "Presence based on user status"
+msgstr "التواجد حسب حالة المستخدم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_pos_preset
+msgid "Presets"
+msgstr "الإعدادات المسبقة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_product_pricelist
+msgid "Pricelists"
+msgstr "قوائم الأسعار"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__snailmail_duplex
+msgid "Print Both Sides"
+msgstr "الطباعة على الوجهين"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_stock_lot_print_gs1
+msgid "Print GS1 Barcodes for Lots & Serial Numbers"
+msgstr "طباعة باركود GS1 للدفعات والأرقام التسلسلية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__snailmail_color
+msgid "Print In Color"
+msgstr "الطباعة بالألوان"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Process operations at work centers."
+msgstr "تنفيذ العمليات في مراكز العمل."
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Project"
+msgstr "المشاريع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_project_stages
+msgid "Project Stages"
+msgstr "مراحل المشروع"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Qualify incoming requests as leads before they become opportunities."
+msgstr "تأهيل الطلبات الواردة كعملاء محتملين قبل أن تصبح فرصًا."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_sale_order_template
+msgid "Quotation Templates"
+msgstr "قوالب عروض الأسعار"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__reconcile_aggregate
+msgid "Reconcile Aggregate"
+msgstr "تجميع التسوية"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_expense_use_mailgateway
+msgid "Record expenses by email"
+msgstr "تسجيل المصروفات بالبريد الإلكتروني"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_use_recurring_revenues
+msgid "Recurring Revenues"
+msgstr "الإيرادات المتكررة"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Reminders"
+msgstr "التذكيرات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__horizon_days
+msgid "Replenishment Horizon (days)"
+msgstr "أفق إعادة التزويد (أيام)"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__security_lead
+msgid "Security Lead Time (days)"
+msgstr "مهلة الأمان (أيام)"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__use_security_lead
+msgid "Security Lead Time for Sales"
+msgstr "مهلة الأمان للمبيعات"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__point_of_sale_use_ticket_qr_code
+msgid "Self-service invoicing"
+msgstr "الفوترة الذاتية"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Shop configuration"
+msgstr "تهيئة المتجر"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Shops"
+msgstr "المتاجر"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_stock_multi_locations
+msgid "Storage Locations"
+msgstr "مواقع التخزين"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Tasks Management"
+msgstr "إدارة المهام"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "Track recurring revenue on opportunities."
+msgstr "تتبع الإيرادات المتكررة في الفرص."
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_unlocked_by_default
+msgid "Unlock Manufacturing Orders"
+msgstr "إلغاء قفل أوامر التصنيع"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__update_stock_quantities
+msgid "Update quantities in stock"
+msgstr "تحديث الكميات في المخزون"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__hr_presence_control_ip_list
+msgid "Valid IP addresses"
+msgstr "عناوين IP المسموح بها"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__vat_check_vies
+msgid "Verify VAT Numbers"
+msgstr "التحقق من أرقام ضريبة القيمة المضافة"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__product_volume_volume_in_cubic_feet
+msgid "Volume unit of measure"
+msgstr "وحدة قياس الحجم"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__product_weight_in_lbs
+msgid "Weight unit of measure"
+msgstr "وحدة قياس الوزن"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_workorder_dependencies
+msgid "Work Order Dependencies"
+msgstr "اعتماديات أوامر العمل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__group_mrp_routings
+msgid "Work Orders"
+msgstr "أوامر العمل"
+
+#. module: ncollection_core
+#: model:ir.model.fields,field_description:ncollection_core.field_ncollection_business_settings__work_permit_expiration_notice_period
+msgid "Work Permit Expiry Notice Period (days)"
+msgstr "مهلة التنبيه بانتهاء تصريح العمل (أيام)"
+
+#. module: ncollection_core
+#: model_terms:ir.ui.view,arch_db:ncollection_core.view_nc_business_settings_form_apps
+msgid "e.g. 10.0.0.1, 10.0.0.2"
+msgstr "مثال: 10.0.0.1، 10.0.0.2"

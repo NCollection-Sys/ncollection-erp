@@ -128,4 +128,23 @@
               parent="ncollection_core.menu_ws_workspace"
               action="action_nc_accounting_defaults"
               sequence="16"/>
+
+    <!-- Accounting controls of optional modules (VAT verification, GCC invoice layout, reconciliation grouping):
+         declared in ncollection_core/wizards/app_settings.py, Workspace Administrator only (checked on save too). -->
+    <record id="view_nc_business_settings_form_accounting_apps" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.accounting.apps</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="view_nc_business_settings_form_accounting"/>
+        <field name="arch" type="xml">
+            <xpath expr="//setting[@id='nc_sale_tax_id']/.." position="inside">
+                <setting id="nc_vat_check_vies" invisible="' base_vat ' not in nc_apps" help="Check European VAT numbers against the VIES service when they are entered."><field name="vat_check_vies" readonly="nc_level_business == 'view'"/></setting>
+            </xpath>
+            <xpath expr="//setting[@id='nc_qr_code']/.." position="inside">
+                <setting id="nc_l10n_gcc_dual_language_invoice" invisible="' l10n_gcc_invoice ' not in nc_apps" help="Arabic and English invoice layout for GCC countries."><field name="l10n_gcc_dual_language_invoice" readonly="nc_level_business == 'view'"/></setting>
+            </xpath>
+            <xpath expr="//setting[@id='nc_account_use_credit_limit']/.." position="inside">
+                <setting id="nc_reconcile_aggregate" invisible="' account_reconcile_oca ' not in nc_apps" help="How bank lines are grouped in the reconciliation workspace."><field name="reconcile_aggregate" readonly="nc_level_business == 'view'"/></setting>
+            </xpath>
+        </field>
+    </record>
 </odoo>

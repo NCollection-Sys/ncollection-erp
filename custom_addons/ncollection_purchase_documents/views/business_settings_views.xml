@@ -36,4 +36,18 @@
     <menuitem id="menu_workspace_purchase_settings" name="Purchase Settings" active="False"
               parent="ncollection_core.menu_workspace_settings_root" action="action_nc_purchase_settings" sequence="17"
               groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_purchase"/>
+
+    <!-- Purchase settings of optional modules (ncollection_core/wizards/app_settings.py). -->
+    <record id="view_nc_business_settings_form_purchase_apps" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.purchase.apps</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="view_nc_business_settings_form_purchase"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='purchase']" position="inside">
+                <block title="Logistics" invisible="' purchase_stock ' not in nc_apps">
+                    <setting id="nc_days_to_purchase" help="Days needed to confirm a purchase order, used to schedule replenishment."><field name="days_to_purchase" readonly="nc_level_purchase == 'view'"/></setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
 </odoo>

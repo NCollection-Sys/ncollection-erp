@@ -78,6 +78,10 @@ adding a module fails CI until someone updates this list.
   narrow, synced as `workspace.config.settings_policy`), enforced at the ORM; delegation = section groups. **Interface Text**:
   platform terminology rules (Supplier, not Vendor) + audited label overrides, workspace or company scope, in-page editor.
   Docs: `LABELS_AND_TERMINOLOGY.md`.
+  **Settings of optional apps** (CRM, Employees, Attendances, Expenses, Manufacturing, Project, Point of Sale, Email Marketing, VAT
+  verification, ...): ONE table `wizards/app_settings.py`, offered only while the module is installed, side-effect settings applied by
+  Odoo's own `set_values` (never `execute`). Docs: `TENANT_SETTINGS_COVERAGE.md`. Also the **persistent application sidebar**
+  (`static/src/app_sidebar`: Odoo's own menu-service apps and icons, collapse saved per user + database in the browser; phones keep Odoo's drawer).
 - `ncollection_api` — the public REST API (#77): `/api/v1`, OAuth2
   client-credentials, scoped tokens, per-client rate limiting, metadata-only
   request logging. **Extends Odoo core's `res.users.apikeys`** rather than
@@ -436,6 +440,7 @@ So tenant key === subdomain === database name, always.
 - `ARCHITECTURE_DATA_PLATFORM.md` · `ARCHITECTURE_SECURITY.md` — backend & security deep-dives.
 - `TASK_PROMPT_TEMPLATE.md` — canonical Standing Rules + manual issue template.
 - `WORKSPACE_AND_TENANT_ADMINISTRATION.md` — roles = real groups, password reset, the platform's user-administration service, audit, boundaries.
+- `TENANT_SETTINGS_COVERAGE.md` — every installed module's native settings vs. what the tenant Settings page offers, why the rest is not offered, role matrix.
 - `UAE_EINVOICING.md` — the UAE e-invoicing engine: scope, identity model, rounding analysis, validator, retention and offboarding, provisioning gate.
 - `DEPLOYMENT_DOMAIN_CONTRACT.md` — the production domain (`balancecloud.ae` + `*.balancecloud.ae`): the one `DOMAIN` setting, the wildcard route, DNS / TLS / forwarded headers / trusted proxy, what is proven where.
 - `RELEASE_SYNC_WORKFLOW.md` — local / GitHub / BOTH production platforms (Balance Cloud, Atlas Core) stay on one release: lifecycle, intentional differences, release record, and the read-only `scripts/dev/release_sync_check.sh` (PASS/WARN/FAIL per platform, `--json`).

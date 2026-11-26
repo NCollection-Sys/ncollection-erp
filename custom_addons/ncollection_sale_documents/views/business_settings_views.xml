@@ -45,4 +45,25 @@
     <menuitem id="menu_workspace_sales_settings" name="Sales Settings" active="False"
               parent="ncollection_core.menu_workspace_settings_root" action="action_nc_sales_settings" sequence="16"
               groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_sales"/>
+
+    <!-- Sales settings of optional modules (quotation templates, pricelists, delivery lead time): declared in
+         ncollection_core/wizards/app_settings.py, shown only while their module is installed. -->
+    <record id="view_nc_business_settings_form_sales_apps" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.sales.apps</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="view_nc_business_settings_form_sales"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='sale']" position="inside">
+                <block title="Templates &amp; Pricelists">
+                    <setting id="nc_group_sale_order_template" invisible="' sale_management ' not in nc_apps"><field name="group_sale_order_template" readonly="nc_level_sales == 'view'"/></setting>
+                    <setting id="nc_group_product_pricelist" invisible="' product ' not in nc_apps"><field name="group_product_pricelist" readonly="nc_level_sales == 'view'"/></setting>
+                </block>
+                <block title="Shipping" invisible="' sale_stock ' not in nc_apps">
+                    <setting id="nc_default_picking_policy"><field name="default_picking_policy" readonly="nc_level_sales == 'view'"/></setting>
+                    <setting id="nc_use_security_lead"><field name="use_security_lead" readonly="nc_level_sales == 'view'"/>
+                        <div class="mt-2" invisible="not use_security_lead"><field name="security_lead" readonly="nc_level_sales == 'view'"/></div></setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
 </odoo>

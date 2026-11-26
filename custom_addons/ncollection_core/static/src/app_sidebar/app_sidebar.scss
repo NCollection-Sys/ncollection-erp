@@ -1,0 +1,68 @@
+// Persistent application sidebar. Same frame language as the settings app list and the journal balance panels:
+// white, thin neutral border, small radius, active item in the primary tint. Logical properties: RTL mirrors itself.
+:root {
+    --nc-sb-w: 224px;
+    --nc-sb-w-collapsed: 60px;
+}
+
+body.nc-sb-on .o_action_manager {
+    margin-inline-start: var(--nc-sb-w);
+    transition: margin-inline-start 0.18s ease;
+}
+body.nc-sb-on.nc-sb-collapsed .o_action_manager { margin-inline-start: var(--nc-sb-w-collapsed); }
+
+.nc-sb {
+    position: fixed; z-index: 10; inset-inline-start: 0; bottom: 0;
+    top: var(--o-navbar-height, 46px);
+    width: var(--nc-sb-w); display: flex; flex-direction: column;
+    background: $white; border-inline-end: 1px solid $border-color;
+    transition: width 0.18s ease; overflow: hidden;
+    &.nc-sb-is-collapsed { width: var(--nc-sb-w-collapsed); }
+}
+.nc-sb-list {
+    list-style: none; margin: 0; padding: 6px 8px 16px; overflow-y: auto; overflow-x: hidden; flex: 1 1 auto;
+    scrollbar-width: thin;
+}
+.nc-sb-item {
+    display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px; margin-bottom: 2px;
+    border-radius: $btn-border-radius; color: $body-color; text-decoration: none; white-space: nowrap;
+    border: 1px solid transparent;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+    &:hover { background-color: rgba($primary, 0.06); color: $body-color; }
+    &:focus-visible { outline: 2px solid $primary; outline-offset: 1px; }
+    &.active {
+        background-color: rgba($primary, 0.1); border-color: rgba($primary, 0.25); color: $primary; font-weight: 600;
+    }
+}
+.nc-sb-icon {
+    flex: 0 0 28px; width: 28px; height: 28px; border-radius: 6px; object-fit: contain;
+    &.nc-sb-glyph { display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+}
+.nc-sb-label { overflow: hidden; text-overflow: ellipsis; transition: opacity 0.12s ease; }
+.nc-sb-toggle {
+    display: flex; align-items: center; gap: 10px; height: 36px; margin: 8px 8px 4px; padding: 0 10px;
+    background: transparent; border: 1px solid $border-color; border-radius: $btn-border-radius;
+    color: $text-muted; white-space: nowrap; font-size: 0.85rem;
+    &:hover { color: $primary; border-color: $primary; background-color: rgba($primary, 0.06); }
+    &:focus-visible { outline: 2px solid $primary; outline-offset: 1px; }
+}
+.nc-sb-chev { flex: 0 0 18px; text-align: center; }
+.o_rtl .nc-sb-chev { transform: scaleX(-1); }
+.nc-sb-is-collapsed {
+    .nc-sb-label { opacity: 0; width: 0; }
+    .nc-sb-item, .nc-sb-toggle { justify-content: center; padding: 0; gap: 0; }
+}
+// tablets: the content always keeps the collapsed width; an expanded sidebar overlays it
+@media (max-width: 1100px) {
+    body.nc-sb-on .o_action_manager,
+    body.nc-sb-on.nc-sb-collapsed .o_action_manager { margin-inline-start: var(--nc-sb-w-collapsed); }
+    .nc-sb:not(.nc-sb-is-collapsed) { box-shadow: 0 6px 24px rgba(16, 24, 40, 0.14); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .nc-sb, .nc-sb-label, body.nc-sb-on .o_action_manager { transition: none; }
+}
+
+// apps dropdown icons
+.nc-app-dd { display: inline-flex; align-items: center; gap: 10px; }
+.nc-app-dd-icon { width: 22px; height: 22px; border-radius: 5px; object-fit: contain; flex: 0 0 22px; }
+.nc-app-dd-blank { background: rgba($primary, 0.12); }

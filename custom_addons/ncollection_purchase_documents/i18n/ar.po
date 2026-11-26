@@ -191,3 +191,13 @@ msgstr "إعدادات المشتريات"
 #: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase
 msgid "Suppliers"
 msgstr "الموردون"
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase_apps
+msgid "Days needed to confirm a purchase order, used to schedule replenishment."
+msgstr "الأيام اللازمة لتأكيد أمر الشراء، وتُستخدم لجدولة إعادة التزويد."
+
+#. module: ncollection_purchase_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_purchase_documents.view_nc_business_settings_form_purchase_apps
+msgid "Logistics"
+msgstr "الخدمات اللوجستية"

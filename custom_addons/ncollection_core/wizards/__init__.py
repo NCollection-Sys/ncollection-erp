@@ -7,3 +7,4 @@ from . import workspace_overview
 from . import business_settings
 from . import module_maintenance
 from . import base_document_layout
+from . import app_settings

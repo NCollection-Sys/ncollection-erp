@@ -506,15 +506,21 @@
             </label>
         </div>
         <div class="nc-au-vcards" role="list" aria-label="Versions">
-            <button t-foreach="h.versions" t-as="v" t-key="v.id" role="listitem"
-                    t-attf-class="nc-au-vcard nc-au-tl-{{v.action}} {{isPicked(v.id) ? 'picked' : ''}}"
+            <button t-foreach="h.versions" t-as="v" t-key="v.id" role="listitem" type="button"
+                    t-att-aria-pressed="isPicked(v.id) ? 'true' : 'false'"
+                    t-attf-class="nc-au-vcard nc-au-vk-{{v.undo_event ? 'restore' : v.action}} {{isPicked(v.id) ? 'picked' : ''}}"
                     t-on-click="() => this.pickVersion(v.id)">
                 <span class="nc-au-vcard-tag" t-if="v.id == state.compareA">A</span>
                 <span class="nc-au-vcard-tag" t-elif="v.id == state.compareB">B</span>
-                <b>v<t t-esc="v.version"/></b>
-                <span t-esc="actionLabel(v.action)"/>
-                <span class="nc-au-muted small" t-esc="fmtDate(v.date)"/>
-                <span class="nc-au-muted small" t-esc="v.user"/>
+                <span class="nc-au-vcard-top">
+                    <span class="nc-au-vcard-num">v<t t-esc="v.version"/></span>
+                    <span class="nc-au-vcard-kind"><t t-if="v.undo_event">Restore</t><t t-else="" t-esc="actionLabel(v.action)"/></span>
+                </span>
+                <span class="nc-au-vcard-sum" t-att-title="v.fields.join(', ')">
+                    <t t-if="v.child">Line · </t><t t-if="v.fields.length" t-esc="v.fields.slice(0, 2).join(', ') + (v.fields.length &gt; 2 ? ' +' + (v.fields.length - 2) : '')"/><t t-else="">No field changes</t>
+                </span>
+                <span class="nc-au-vcard-meta"><i class="fa fa-clock-o" aria-hidden="true"/> <t t-esc="fmtDate(v.date)"/></span>
+                <span class="nc-au-vcard-meta"><i class="fa fa-user-o" aria-hidden="true"/> <t t-esc="v.user"/></span>
             </button>
         </div>
         <div t-if="state.pickFirst" class="nc-au-muted small">Choose a second version to compare with v<t t-esc="versionOf(state.pickFirst)?.version"/>.</div>

@@ -142,8 +142,7 @@ msgstr "حساب"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_action
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_action
 msgid "Action"
 msgstr "الإجراء"
 
@@ -253,8 +252,7 @@ msgstr "يلزم إصداران مُسجَّلان على الأقل للمقا�
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_actions.py:0
-#: code:addons/ncollection_audit/models/audit_service.py:0
+#: code:addons/ncollection_audit/models/audit_actions.py:0 code:addons/ncollection_audit/models/audit_service.py:0
 msgid "Audit History"
 msgstr "سجل التدقيق للمستند"
 
@@ -265,9 +263,7 @@ msgstr "إجراءات سجل التدقيق على المستندات"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.actions.client,name:ncollection_audit.action_nc_audit_center
-#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_root
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.actions.client,name:ncollection_audit.action_nc_audit_center model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_root
 msgid "Audit Log"
 msgstr "سجل التدقيق"
 
@@ -297,9 +293,7 @@ msgid "Audit Log: Undo changes"
 msgstr "سجل التدقيق: التراجع عن التغييرات"
 
 #. module: ncollection_audit
-#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_seal
-#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_seal
-#: model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
+#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_seal model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_seal model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_seal_list
 msgid "Audit Seals"
 msgstr "أختام التدقيق"
 
@@ -440,8 +434,7 @@ msgstr "اختر إصدارًا ثانيًا للمقارنة مع الإصدا�
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_undo.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
+#: code:addons/ncollection_audit/models/audit_undo.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
 msgid "Choose at least one field to restore."
 msgstr "اختر حقلاً واحدًا على الأقل لاستعادته."
 
@@ -453,8 +446,7 @@ msgstr "مسح"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_remote_addr
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_remote_addr
 msgid "Client IP"
 msgstr "عنوان IP للعميل"
 
@@ -465,9 +457,7 @@ msgstr "عنوان العميل للطلب الذي تسبب في هذا الإ�
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_company_id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__company_id
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__nc_company_id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__company_id
 msgid "Company"
 msgstr "الشركة"
 
@@ -533,10 +523,7 @@ msgstr "مركز تكلفة / ربح"
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__create
+#: code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__create
 msgid "Create"
 msgstr "إنشاء"
 
@@ -547,16 +534,12 @@ msgid "Created %(type)s %(name)s"
 msgstr "إنشاء %(type)s %(name)s"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__create_uid
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__create_uid
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__create_uid
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__create_uid model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__create_uid model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__create_uid
 msgid "Created by"
 msgstr "أنشئ بواسطة"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__create_date
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__create_date
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__create_date
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__create_date model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__create_date model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__create_date
 msgid "Created on"
 msgstr "أنشئ في"
 
@@ -599,10 +582,7 @@ msgstr "التاريخ والوقت"
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__delete
+#: code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__delete
 msgid "Delete"
 msgstr "حذف"
 
@@ -643,8 +623,7 @@ msgstr "الوصف"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__details
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__details
 msgid "Details"
 msgstr "التفاصيل"
 
@@ -654,16 +633,7 @@ msgid "Digest"
 msgstr "التجزئة"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_admin_service__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_actions__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_document__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_service__display_name
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__display_name
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__display_name model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_admin_service__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_actions__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_document__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_service__display_name model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__display_name
 msgid "Display Name"
 msgstr "اسم العرض"
 
@@ -681,8 +651,7 @@ msgstr "مرجع المستند"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__model_id
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__model_id
 msgid "Document Type"
 msgstr "نوع المستند"
 
@@ -847,8 +816,7 @@ msgstr "مخفي"
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/models/audit_values.py:0
+#: code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/models/audit_values.py:0
 msgid "Hidden (restricted field)"
 msgstr "مخفي (حقل مقيَّد)"
 
@@ -858,16 +826,7 @@ msgid "History"
 msgstr "السجل"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_admin_service__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_actions__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_document__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_service__id
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__id
+#: model:ir.model.fields,field_description:ncollection_audit.field_auditlog_autovacuum__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_log__id model:ir.model.fields,field_description:ncollection_audit.field_auditlog_rule__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_admin_service__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_actions__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_document__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_service__id model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__id
 msgid "ID"
 msgstr "المعرف"
 
@@ -960,16 +919,12 @@ msgid "Kind"
 msgstr "النوع"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__write_uid
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__write_uid
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__write_uid
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__write_uid model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__write_uid model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__write_uid
 msgid "Last Updated by"
 msgstr "آخر تحديث بواسطة"
 
 #. module: ncollection_audit
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__write_date
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__write_date
-#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__write_date
+#: model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_policy__write_date model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_seal__write_date model:ir.model.fields,field_description:ncollection_audit.field_ncollection_audit_undo__write_date
 msgid "Last Updated on"
 msgstr "آخر تحديث في"
 
@@ -987,8 +942,7 @@ msgstr "السطر %(line)s"
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_restore.py:0
-#: code:addons/ncollection_audit/models/audit_service.py:0
+#: code:addons/ncollection_audit/models/audit_restore.py:0 code:addons/ncollection_audit/models/audit_service.py:0
 msgid "Line %(line)s · %(field)s"
 msgstr "السطر %(line)s · %(field)s"
 
@@ -1023,11 +977,7 @@ msgstr "عدد السجلات"
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/admin_service.py:0
-#: code:addons/ncollection_audit/models/audit_document.py:0
-#: code:addons/ncollection_audit/models/audit_restore.py:0
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/models/audit_undo.py:0
+#: code:addons/ncollection_audit/models/admin_service.py:0 code:addons/ncollection_audit/models/audit_document.py:0 code:addons/ncollection_audit/models/audit_restore.py:0 code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "Malformed request."
 msgstr "طلب غير صالح."
 
@@ -1136,8 +1086,7 @@ msgstr "لا يوجد مستخدمون"
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
+#: code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
 msgid "Not recorded"
 msgstr "غير مُسجَّل"
 
@@ -1149,8 +1098,7 @@ msgstr "غير قابلة للاستعادة"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Not undone"
 msgstr "لم يُتراجع عنه"
 
@@ -1198,9 +1146,7 @@ msgstr "السجل الأصلي"
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__other
+#: code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__other
 msgid "Other"
 msgstr "أخرى"
 
@@ -1339,9 +1285,7 @@ msgid "Recorded By"
 msgstr "سُجِّل بواسطة"
 
 #. module: ncollection_audit
-#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_policy
-#: model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_policies
-#: model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_policy_list
+#: model:ir.actions.act_window,name:ncollection_audit.action_nc_audit_policy model:ir.ui.menu,name:ncollection_audit.menu_nc_audit_policies model_terms:ir.ui.view,arch_db:ncollection_audit.view_nc_audit_policy_list
 msgid "Recorded Document Types"
 msgstr "أنواع المستندات المُسجَّلة"
 
@@ -1417,8 +1361,7 @@ msgstr "إعادة تعيين"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Restore"
 msgstr "استعادة"
 
@@ -1430,8 +1373,7 @@ msgstr "استعادة %s من حقول هذا المستند إلى قيمها 
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields.selection,name:ncollection_audit.selection__ncollection_audit_undo__kind__version
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields.selection,name:ncollection_audit.selection__ncollection_audit_undo__kind__version
 msgid "Restore a version"
 msgstr "استعادة إصدار"
 
@@ -1664,8 +1606,7 @@ msgstr "إشعار دائن من مورد"
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_values.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+#: code:addons/ncollection_audit/models/audit_values.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Tax"
 msgstr "ضريبة"
 
@@ -1735,8 +1676,7 @@ msgstr "يُحذف المستند. ويُسجَّل الحذف نفسه ويمك
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_restore.py:0
-#: code:addons/ncollection_audit/models/audit_undo.py:0
+#: code:addons/ncollection_audit/models/audit_restore.py:0 code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "The document no longer exists."
 msgstr "المستند لم يعد موجودًا."
 
@@ -1810,8 +1750,7 @@ msgstr "لم تُسجَّل القيم السابقة للحذف في هذا ا�
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_document.py:0
-#: code:addons/ncollection_audit/models/audit_service.py:0
+#: code:addons/ncollection_audit/models/audit_document.py:0 code:addons/ncollection_audit/models/audit_service.py:0
 msgid "These versions are not part of this document's visible history."
 msgstr "هذان الإصداران ليسا جزءًا من السجل المرئي لهذا المستند."
 
@@ -1841,8 +1780,7 @@ msgstr "يجري شخص آخر تعديل هذا المستند الآن. حاو
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_restore.py:0
-#: code:addons/ncollection_audit/models/audit_undo.py:0
+#: code:addons/ncollection_audit/models/audit_restore.py:0 code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "This document is being changed by someone else right now. Try again."
 msgstr "يقوم شخص آخر بتغيير هذا المستند الآن. حاول مرة أخرى."
 
@@ -1860,8 +1798,7 @@ msgstr "نوع المستند هذا لم يعد مُثبَّتًا."
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_undo.py:0
-#: model:ir.model.constraint,message:ncollection_audit.constraint_ncollection_audit_undo_original_unique_idx
+#: code:addons/ncollection_audit/models/audit_undo.py:0 model:ir.model.constraint,message:ncollection_audit.constraint_ncollection_audit_undo_original_unique_idx
 msgid "This event has already been undone."
 msgstr "تم التراجع عن هذا الحدث من قبل."
 
@@ -1932,8 +1869,7 @@ msgstr "غير متغير"
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Undo"
 msgstr "تراجع"
 
@@ -1999,8 +1935,7 @@ msgstr "التراجع غير متاح."
 
 #. module: ncollection_audit
 #. odoo-javascript
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
 msgid "Undone"
 msgstr "تم التراجع عنه"
 
@@ -2030,10 +1965,7 @@ msgstr "المبلغ غير الخاضع للضريبة"
 #. module: ncollection_audit
 #. odoo-javascript
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_service.py:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0
-#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
-#: model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__update
+#: code:addons/ncollection_audit/models/audit_service.py:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.js:0 code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0 model:ir.model.fields.selection,name:ncollection_audit.selection__auditlog_log__nc_action__update
 msgid "Update"
 msgstr "تعديل"
 
@@ -2191,8 +2123,7 @@ msgstr "نعم"
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_restore.py:0
-#: code:addons/ncollection_audit/models/audit_undo.py:0
+#: code:addons/ncollection_audit/models/audit_restore.py:0 code:addons/ncollection_audit/models/audit_undo.py:0
 msgid "You are not allowed to change this document."
 msgstr "غير مسموح لك بتغيير هذا المستند."
 
@@ -2222,8 +2153,7 @@ msgstr "غير مسموح لك باستعادة المستندات الخاضع�
 
 #. module: ncollection_audit
 #. odoo-python
-#: code:addons/ncollection_audit/models/audit_document.py:0
-#: code:addons/ncollection_audit/models/audit_service.py:0
+#: code:addons/ncollection_audit/models/audit_document.py:0 code:addons/ncollection_audit/models/audit_service.py:0
 msgid "You are not allowed to see this document's history."
 msgstr "غير مسموح لك برؤية سجل هذا المستند."
 
@@ -2347,3 +2277,14 @@ msgstr "مقابل الإصدار"
 msgid "· Version"
 msgstr "· الإصدار"
 
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "Line ·"
+msgstr "سطر ·"
+
+#. module: ncollection_audit
+#. odoo-javascript
+#: code:addons/ncollection_audit/static/src/audit_center/audit_center.xml:0
+msgid "No field changes"
+msgstr "لا تغييرات في الحقول"

@@ -183,6 +183,8 @@ class NcBusinessSettings(models.TransientModel):
             self._nc_check_value(name, value)
             if how == 'native':
                 self._nc_apply_native(company, name, value)
+            elif how == 'settings_page':
+                self._nc_apply_via_settings_page(company, name, value)    # app_settings.py
             else:
                 getattr(self, how)(company, value)
             changed.append(name)

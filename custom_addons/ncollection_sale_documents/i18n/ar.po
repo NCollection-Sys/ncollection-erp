@@ -221,3 +221,13 @@ msgstr "التسعير والفوترة"
 #: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales
 msgid "Quotations & Orders"
 msgstr "عروض الأسعار والطلبات"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales_apps
+msgid "Shipping"
+msgstr "الشحن"
+
+#. module: ncollection_sale_documents
+#: model_terms:ir.ui.view,arch_db:ncollection_sale_documents.view_nc_business_settings_form_sales_apps
+msgid "Templates & Pricelists"
+msgstr "القوالب وقوائم الأسعار"

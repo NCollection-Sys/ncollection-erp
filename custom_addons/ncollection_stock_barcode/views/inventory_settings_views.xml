@@ -39,4 +39,28 @@
     <menuitem id="menu_workspace_inventory_settings" name="Inventory Settings" active="False"
               parent="ncollection_core.menu_workspace_settings_root" action="action_nc_inventory_settings"
               sequence="18" groups="ncollection_core.group_tenant_admin,ncollection_core.group_settings_inventory"/>
+
+    <!-- Inventory settings declared in ncollection_core/wizards/app_settings.py (warehouse structure, replenishment,
+         units, lots on invoices): shown only while their module is installed. -->
+    <record id="view_nc_business_settings_form_inventory_apps" model="ir.ui.view">
+        <field name="name">ncollection.business.settings.form.inventory.apps</field>
+        <field name="model">ncollection.business.settings</field>
+        <field name="inherit_id" ref="view_nc_business_settings_form_inventory"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='stock']" position="inside">
+                <block title="Warehouse">
+                    <setting id="nc_group_stock_multi_locations"><field name="group_stock_multi_locations" readonly="nc_level_inventory == 'view'"/></setting>
+                    <setting id="nc_group_stock_adv_location" invisible="not group_stock_multi_locations"><field name="group_stock_adv_location" readonly="nc_level_inventory == 'view'"/></setting>
+                    <setting id="nc_group_stock_lot_print_gs1"><field name="group_stock_lot_print_gs1" readonly="nc_level_inventory == 'view'"/></setting>
+                    <setting id="nc_horizon_days"><field name="horizon_days" readonly="nc_level_inventory == 'view'"/></setting>
+                    <setting id="nc_stock_move_email_validation"><field name="stock_move_email_validation" readonly="nc_level_inventory == 'view'"/></setting>
+                    <setting id="nc_group_lot_on_invoice" invisible="' stock_account ' not in nc_apps"><field name="group_lot_on_invoice" readonly="nc_level_inventory == 'view'"/></setting>
+                </block>
+                <block title="Units of Measure">
+                    <setting id="nc_product_weight_in_lbs"><field name="product_weight_in_lbs" readonly="nc_level_inventory == 'view'"/></setting>
+                    <setting id="nc_product_volume_volume_in_cubic_feet"><field name="product_volume_volume_in_cubic_feet" readonly="nc_level_inventory == 'view'"/></setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
 </odoo>
