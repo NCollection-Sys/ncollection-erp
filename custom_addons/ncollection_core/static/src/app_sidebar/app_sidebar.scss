@@ -1,15 +1,16 @@
 // Persistent application sidebar. Same frame language as the settings app list and the journal balance panels:
-// white, thin neutral border, small radius, active item in the primary tint. Logical properties: RTL mirrors itself.
+// white, thin neutral border, button radius, active item in the primary tint. Logical properties: RTL mirrors itself.
+// The page margin follows the bar itself (:has), so nothing is left behind where the bar is not rendered.
 :root {
     --nc-sb-w: 224px;
     --nc-sb-w-collapsed: 60px;
 }
 
-body.nc-sb-on .o_action_manager {
+body:has(.nc-sb) .o_action_manager {
     margin-inline-start: var(--nc-sb-w);
     transition: margin-inline-start 0.18s ease;
 }
-body.nc-sb-on.nc-sb-collapsed .o_action_manager { margin-inline-start: var(--nc-sb-w-collapsed); }
+body:has(.nc-sb.nc-sb-is-collapsed) .o_action_manager { margin-inline-start: var(--nc-sb-w-collapsed); }
 
 .nc-sb {
     position: fixed; z-index: 10; inset-inline-start: 0; bottom: 0;
@@ -47,22 +48,22 @@ body.nc-sb-on.nc-sb-collapsed .o_action_manager { margin-inline-start: var(--nc-
     &:focus-visible { outline: 2px solid $primary; outline-offset: 1px; }
 }
 .nc-sb-chev { flex: 0 0 18px; text-align: center; }
-.o_rtl .nc-sb-chev { transform: scaleX(-1); }
 .nc-sb-is-collapsed {
     .nc-sb-label { opacity: 0; width: 0; }
     .nc-sb-item, .nc-sb-toggle { justify-content: center; padding: 0; gap: 0; }
 }
-// tablets: the content always keeps the collapsed width; an expanded sidebar overlays it
+// tablets: the content always keeps the collapsed width; an expanded sidebar overlays it (Escape / outside click close)
 @media (max-width: 1100px) {
-    body.nc-sb-on .o_action_manager,
-    body.nc-sb-on.nc-sb-collapsed .o_action_manager { margin-inline-start: var(--nc-sb-w-collapsed); }
+    body:has(.nc-sb) .o_action_manager { margin-inline-start: var(--nc-sb-w-collapsed); }
     .nc-sb:not(.nc-sb-is-collapsed) { box-shadow: 0 6px 24px rgba(16, 24, 40, 0.14); }
 }
+@media print {
+    body:has(.nc-sb) .o_action_manager { margin-inline-start: 0 !important; }
+}
 @media (prefers-reduced-motion: reduce) {
-    .nc-sb, .nc-sb-label, body.nc-sb-on .o_action_manager { transition: none; }
+    .nc-sb, .nc-sb-label, body:has(.nc-sb) .o_action_manager { transition: none; }
 }
 
 // apps dropdown icons
 .nc-app-dd { display: inline-flex; align-items: center; gap: 10px; }
 .nc-app-dd-icon { width: 22px; height: 22px; border-radius: 5px; object-fit: contain; flex: 0 0 22px; }
-.nc-app-dd-blank { background: rgba($primary, 0.12); }

@@ -13,29 +13,30 @@
         </xpath>
         <xpath expr="//div[hasclass('o_navbar_apps_menu')]//DropdownItem" position="inside">
             <span class="nc-app-dd">
-                <img t-if="app.webIconData" class="nc-app-dd-icon" t-att-src="app.webIconData" alt=""/>
-                <span t-else="" class="nc-app-dd-icon nc-app-dd-blank" aria-hidden="true"/>
+                <img class="nc-app-dd-icon" t-att-src="app.webIconData or '/web/static/img/default_icon_app.png'" alt=""/>
                 <span t-esc="app.name"/>
             </span>
         </xpath>
     </t>
 
     <t t-name="ncollection_core.AppSidebar">
-        <nav class="nc-sb d-print-none" t-att-class="{ 'nc-sb-is-collapsed': state.collapsed }" aria-label="Applications">
-            <button type="button" class="nc-sb-toggle" t-on-click="toggle"
+        <nav class="nc-sb d-print-none" t-ref="root" t-att-class="{ 'nc-sb-is-collapsed': state.collapsed }" aria-label="Applications">
+            <button type="button" class="nc-sb-toggle" t-ref="toggle" t-on-click="toggle"
+                    aria-controls="nc_sb_list"
                     t-att-aria-expanded="state.collapsed ? 'false' : 'true'"
                     t-att-title="toggleLabel" t-att-aria-label="toggleLabel">
-                <i t-attf-class="fa {{ state.collapsed ? 'fa-angle-double-right' : 'fa-angle-double-left' }} nc-sb-chev" aria-hidden="true"/>
-                <span class="nc-sb-label">Collapse menu</span>
+                <i t-attf-class="fa {{ chevron }} nc-sb-chev" aria-hidden="true"/>
+                <span class="nc-sb-label" t-esc="toggleLabel"/>
             </button>
-            <ul class="nc-sb-list">
+            <ul class="nc-sb-list" id="nc_sb_list">
                 <li t-foreach="apps" t-as="item" t-key="item.id">
                     <a t-att-href="href(item.app)" class="nc-sb-item"
                        t-att-class="{ 'active': state.current === item.id }"
                        t-att-aria-current="state.current === item.id ? 'page' : false"
                        t-att-data-menu-xmlid="item.xmlid"
-                       t-att-data-tooltip="state.collapsed ? item.name : false" data-tooltip-position="right"
-                       t-att-aria-label="item.name"
+                       t-att-data-tooltip="state.collapsed ? item.name : false"
+                       t-att-data-tooltip-position="tooltipPosition"
+                       t-att-aria-label="state.collapsed ? item.name : false"
                        t-on-click="(ev) => this.open(ev, item)">
                         <img t-if="item.src" class="nc-sb-icon" t-att-src="item.src" alt=""/>
                         <span t-else="" class="nc-sb-icon nc-sb-glyph" t-att-style="item.glyph.style" aria-hidden="true"><i t-att-class="item.glyph.iconClass"/></span>

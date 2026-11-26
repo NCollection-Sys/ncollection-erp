@@ -66,3 +66,17 @@ Settings section, how it is applied, administrator-only flag.
 | Section delegate (Sales / Purchase / Inventory) | its own section | refused | refused |
 | Accounting clerk, other users | page refused | refused | refused |
 | Platform Administrator | native path, unchanged | native | native |
+
+## Known behaviour (review notes, 2026-11-26)
+
+- A save with any side-effect setting runs Odoo's own `set_values` of every installed module once,
+  exactly as Odoo's own settings page does on each Save. Odoo's own rules therefore apply, e.g.
+  with Pricelists off, `product` archives pricelists; with Leads changed, `crm` updates every sales
+  team. Configuration parameters other than the changed settings' own are restored after the call
+  (Odoo re-normalises them: `'5'` -> `'5.0'`, `'0'` -> deleted); a test pins this.
+- Feature groups (Pricelists, Storage Locations, Leads, Work Orders, ...) are tenant-wide in Odoo,
+  not per company: changing one while company A is active changes it for company B too.
+- Storage Locations / Multi-Step Routes need an Inventory Manager: Odoo's own `set_values` skips
+  its operation-type changes for anyone else, so the page refuses rather than half-apply.
+- Numeric settings are checked for sign only; no upper bounds yet. The IP list is free text, as in
+  Odoo.

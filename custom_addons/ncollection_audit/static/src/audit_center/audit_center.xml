@@ -514,13 +514,13 @@
                 <span class="nc-au-vcard-tag" t-elif="v.id == state.compareB">B</span>
                 <span class="nc-au-vcard-top">
                     <span class="nc-au-vcard-num">v<t t-esc="v.version"/></span>
-                    <span class="nc-au-vcard-kind"><t t-if="v.undo_event">Restore</t><t t-else="" t-esc="actionLabel(v.action)"/></span>
+                    <span class="nc-au-vcard-kind"><i t-attf-class="fa {{ v.undo_event ? 'fa-undo' : (v.action == 'delete' ? 'fa-trash-o' : (v.action == 'create' ? 'fa-plus' : 'fa-pencil')) }} me-1" aria-hidden="true"/><t t-if="v.undo_event">Restore</t><t t-else="" t-esc="actionLabel(v.action)"/></span>
                 </span>
                 <span class="nc-au-vcard-sum" t-att-title="v.fields.join(', ')">
                     <t t-if="v.child">Line · </t><t t-if="v.fields.length" t-esc="v.fields.slice(0, 2).join(', ') + (v.fields.length &gt; 2 ? ' +' + (v.fields.length - 2) : '')"/><t t-else="">No field changes</t>
                 </span>
-                <span class="nc-au-vcard-meta"><i class="fa fa-clock-o" aria-hidden="true"/> <t t-esc="fmtDate(v.date)"/></span>
-                <span class="nc-au-vcard-meta"><i class="fa fa-user-o" aria-hidden="true"/> <t t-esc="v.user"/></span>
+                <span class="nc-au-vcard-meta" t-att-title="fmtDate(v.date)"><i class="fa fa-clock-o" aria-hidden="true"/> <t t-esc="fmtDate(v.date)"/></span>
+                <span class="nc-au-vcard-meta" t-att-title="v.user"><i class="fa fa-user-o" aria-hidden="true"/> <t t-esc="v.user"/></span>
             </button>
         </div>
         <div t-if="state.pickFirst" class="nc-au-muted small">Choose a second version to compare with v<t t-esc="versionOf(state.pickFirst)?.version"/>.</div>

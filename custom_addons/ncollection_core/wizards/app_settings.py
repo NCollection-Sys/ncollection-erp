@@ -101,6 +101,7 @@ APP_SETTINGS = {
     'l10n_gcc_dual_language_invoice': ('l10n_gcc_invoice', 'business', 'GCC Formatted Invoices', 'native', True),
     'reconcile_aggregate': ('account_reconcile_oca', 'business', 'Reconcile Aggregate', 'native', True),
 }
+STOCK_PAGE_ROWS = frozenset(('group_stock_multi_locations', 'group_stock_adv_location'))
 APP_MODULES = tuple(sorted({row[0] for row in APP_SETTINGS.values()}))
 
 _TYPES = {
@@ -192,14 +193,31 @@ class NcBusinessSettings(models.TransientModel):
             raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))
         return super()._nc_check_value(name, value)
 
-    def _nc_apply_via_settings_page(self, company, name, value):
-        """Odoo's own ``set_values`` on a settings record of THIS company holding today's values plus this one change:
-        the module's side effects run exactly as on its own settings page. Elevated only here, after the level, the
-        type and (for accounting rows) the administrator checks of ``action_nc_save``; never ``execute()``."""
-        page = self.env['res.config.settings'].sudo().with_company(company).with_context(
-            allowed_company_ids=[company.id]).create({name: value})
-        page.set_values()
+    def _nc_apply_via_settings_page(self, company, values):
+        """Odoo's own ``set_values``, ONCE per save, on a settings record of THIS company holding today's values plus
+        the changed ones: the modules' side effects run exactly as on Odoo's own settings page (which also runs every
+        installed module's ``set_values`` on each Save). Elevated only here, after the level, type and administrator
+        checks of ``action_nc_save``; never ``execute()``.
 
+        Two guards on top of Odoo's own behaviour:
+          * Inventory's ``set_values`` skips its side effects (operation types, locations) for a user who is not an
+            Inventory Manager, which would leave the group switched with the data unchanged: refused instead;
+          * Odoo's base ``set_values`` re-normalises EVERY configuration parameter of the page ('5' -> '5.0', '0' ->
+            deleted): any parameter other than the ones of the settings changed here is put back as it was."""
+        if set(values) & STOCK_PAGE_ROWS and not self.env.user.has_group('stock.group_stock_manager'):
+            raise AccessError(self.env._(
+                "Only an Inventory Manager can change the warehouse structure (storage locations and routes)."))
+        native = self.env['res.config.settings']._fields
+        own_keys = {getattr(native[name], 'config_parameter', None) for name in values} - {None}
+        params = self.env['ir.config_parameter'].sudo()
+        before = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
+        page = self.env['res.config.settings'].sudo().with_company(company).with_context(
+            allowed_company_ids=[company.id]).create(dict(values))
+        page.set_values()
+        after = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
+        for key in (set(before) | set(after)) - own_keys:
+            if before.get(key) != after.get(key):
+                params.set_param(key, before.get(key, False))
 
 
 # The res.company field behind each 'native' company setting above (Odoo stores them as related fields). Only these

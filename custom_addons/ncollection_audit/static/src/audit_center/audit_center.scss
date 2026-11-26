@@ -238,10 +238,10 @@
         &:focus-visible { outline: 2px solid var(--nc-au-info-fg); outline-offset: 2px; }
         &.picked { border-color: var(--nc-au-info-fg); box-shadow: 0 0 0 1px var(--nc-au-info-fg); }
     }
-    .nc-au-vk-create { --nc-au-accent: #2f8a5b; }
-    .nc-au-vk-update { --nc-au-accent: #a8761a; }
-    .nc-au-vk-delete { --nc-au-accent: #c24141; }
-    .nc-au-vk-restore { --nc-au-accent: #3a6db5; }
+    .nc-au-vk-create { --nc-au-accent: #256f49; }
+    .nc-au-vk-update { --nc-au-accent: #8a5f10; }
+    .nc-au-vk-delete { --nc-au-accent: #a83232; }
+    .nc-au-vk-restore { --nc-au-accent: #2f5c9e; }
     .nc-au-vcard-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
     .nc-au-vcard-num { font-weight: 700; font-size: 1rem; font-variant-numeric: tabular-nums; }
     .nc-au-vcard-kind { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; color: var(--nc-au-accent); }

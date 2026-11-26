@@ -16,7 +16,8 @@ class TestAppSettings(TransactionCase):
         super().setUpClass()
         company = cls.env.company
         common = {'company_id': company.id, 'company_ids': [(6, 0, company.ids)]}
-        cls.owner = new_test_user(cls.env, login='as_owner', groups='base.group_user,ncollection_core.group_role_owner',
+        cls.owner = new_test_user(cls.env, login='as_owner',
+                                  groups='base.group_user,ncollection_core.group_role_owner',
                                   **common)
         cls.delegate = new_test_user(cls.env, login='as_delegate',
                                      groups='base.group_user,ncollection_core.group_settings_business', **common)
@@ -90,3 +91,22 @@ class TestAppSettings(TransactionCase):
     def test_a_plain_user_cannot_open_or_save_the_page(self):
         with self.assertRaises(AccessError):
             self._settings(self.employee, group_mrp_byproducts=True).action_nc_save()
+
+    def test_a_page_save_leaves_other_parameters_exactly_as_they_were(self):
+        if 'group_product_pricelist' not in self.native:
+            return
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_param('ncollection.test.untouched', '5')
+        before = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
+        start = self._settings(self.owner).group_product_pricelist
+        self._settings(self.owner, group_product_pricelist=not start).action_nc_save()
+        after = {p['key']: p['value'] for p in params.search_read([], ['key', 'value'])}
+        self.assertEqual(before, after)
+
+    def test_a_delegate_cannot_write_an_accounting_control_on_the_company_directly(self):
+        from ..wizards.app_settings import ADMIN_ONLY_COMPANY_FIELDS
+        for field in ADMIN_ONLY_COMPANY_FIELDS:
+            if field not in self.env['res.company']._fields:
+                continue
+            with self.assertRaises(AccessError):
+                self.env.company.with_user(self.delegate).write({field: not self.env.company[field]})

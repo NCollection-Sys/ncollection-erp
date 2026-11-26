@@ -2,17 +2,20 @@
 // Persistent application sidebar (desktop / tablet). The apps are Odoo's own menu service apps, which the server
 // already filtered for this user (ir.ui.menu groups): nothing here decides visibility. Navigation goes through
 // menuService.selectMenu (client-side, no page reload). The expanded / collapsed choice is a per-user, per-database
-// browser preference (no server state, never shared between users).
-import { Component, useState, onWillDestroy } from "@odoo/owl";
+// browser preference (no server state, never shared between users). The page margin follows the bar through CSS
+// :has(), so no class is left behind when the bar is not rendered (phones, fullscreen).
+import { Component, onWillDestroy, useExternalListener, useRef, useState } from "@odoo/owl";
 import { patch } from "@web/core/utils/patch";
 import { useService } from "@web/core/utils/hooks";
 import { session } from "@web/session";
 import { user } from "@web/core/user";
 import { browser } from "@web/core/browser/browser";
+import { localization } from "@web/core/l10n/localization";
 import { WebClient } from "@web/webclient/webclient";
 import { _t } from "@web/core/l10n/translation";
 
-const DEFAULT_ICON = "/web/static/img/default_icon_app.png";
+
+export const DEFAULT_ICON = "/web/static/img/default_icon_app.png";
 
 export function sidebarKey() {
     return `nc_app_sidebar:${session.db || ""}:${user.userId}`;
@@ -52,16 +55,43 @@ export class NcAppSidebar extends Component {
 
     setup() {
         this.menu = useService("menu");
+        this.root = useRef("root");
+        this.toggleRef = useRef("toggle");
         this.state = useState({ collapsed: readCollapsed(), current: this.menu.getCurrentApp()?.id || false });
         const onApp = () => {
             this.state.current = this.menu.getCurrentApp()?.id || false;
         };
         this.env.bus.addEventListener("MENUS:APP-CHANGED", onApp);
-        onWillDestroy(() => {
-            this.env.bus.removeEventListener("MENUS:APP-CHANGED", onApp);
-            document.body.classList.remove("nc-sb-on", "nc-sb-collapsed");
+        onWillDestroy(() => this.env.bus.removeEventListener("MENUS:APP-CHANGED", onApp));
+        // a tablet overlay closes on Escape and on a click outside it
+        useExternalListener(window, "keydown", (ev) => {
+            if (ev.key === "Escape" && this.overlaid) {
+                this.close();
+                this.toggleRef.el?.focus();
+            }
         });
-        this.applyBodyClass();
+        useExternalListener(window, "pointerdown", (ev) => {
+            if (this.overlaid && this.root.el && !this.root.el.contains(ev.target)) {
+                this.close();
+            }
+        }, { capture: true });
+    }
+
+    get overlaid() {
+        return !this.state.collapsed && isOverlay();
+    }
+
+    get rtl() {
+        return localization.direction === "rtl";
+    }
+
+    // the chevron points where the bar will move (Odoo mirrors directional icons in RTL itself)
+    get chevron() {
+        return this.state.collapsed ? "fa-angle-double-right" : "fa-angle-double-left";
+    }
+
+    get tooltipPosition() {
+        return this.rtl ? "left" : "right";
     }
 
     get apps() {
@@ -72,14 +102,12 @@ export class NcAppSidebar extends Component {
         return `/odoo/${app.actionPath || "action-" + app.actionID}`;
     }
 
-    applyBodyClass() {
-        const cls = document.body.classList;
-        cls.add("nc-sb-on");
-        cls.toggle("nc-sb-collapsed", this.state.collapsed);
-    }
-
     get toggleLabel() {
         return this.state.collapsed ? _t("Expand menu") : _t("Collapse menu");
+    }
+
+    close() {
+        this.state.collapsed = true; // not saved: closing a tablet overlay is not a preference
     }
 
     toggle() {
@@ -89,7 +117,6 @@ export class NcAppSidebar extends Component {
         } catch {
             // private window / blocked storage: the choice lasts for this page only
         }
-        this.applyBodyClass();
     }
 
     open(ev, item) {
@@ -98,10 +125,8 @@ export class NcAppSidebar extends Component {
         }
         ev.preventDefault();
         this.menu.selectMenu(item.app);
-        if (isOverlay() && !this.state.collapsed) {
-            // on a tablet the expanded bar overlays the page: close it once an application is chosen
-            this.state.collapsed = true;
-            this.applyBodyClass();
+        if (this.overlaid) {
+            this.close();
         }
     }
 }
