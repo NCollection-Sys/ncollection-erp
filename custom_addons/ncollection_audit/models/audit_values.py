@@ -270,7 +270,8 @@ def _analytic_text(env, raw):
         names = []
         for ident in str(key).split(','):
             ident = ident.strip()
-            record = Account.browse(int(ident)).sudo().exists() if Account is not None and ident.isdigit() else None
+            numeric = ident.isascii() and ident.isdigit()
+            record = Account.browse(int(ident)).sudo().exists() if Account is not None and numeric else None
             if record and Account.browse(record.id).has_access('read'):
                 names.append(Account.browse(record.id).display_name)
             else:

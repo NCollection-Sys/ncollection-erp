@@ -1432,8 +1432,8 @@ msgstr "استعادة إصدار غير متاحة لهذا النوع من ا�
 #. module: ncollection_audit
 #. odoo-python
 #: code:addons/ncollection_audit/models/audit_restore.py:0
-msgid "Restoring the customer or supplier recomputes the fiscal position, and with it the taxes of the lines."
-msgstr "استعادة العميل أو المورد تعيد حساب الوضع الضريبي، ومعه ضرائب الأسطر."
+msgid "Restoring the customer or supplier recomputes the fiscal position; the taxes of the lines are kept as shown here."
+msgstr "استعادة العميل أو المورد تعيد احتساب الوضع الضريبي؛ وتبقى ضرائب البنود كما هي معروضة هنا."
 
 #. module: ncollection_audit
 #. odoo-python

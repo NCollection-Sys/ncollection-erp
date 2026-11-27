@@ -51,7 +51,7 @@ APP_SETTINGS = {
     'group_sale_order_template': ('sale_management', 'sales', 'Quotation Templates', 'effect', False),
     'group_product_pricelist': ('product', 'sales', 'Pricelists', 'effect', False),
     'default_picking_policy': ('sale_stock', 'sales', 'Picking Policy', 'native', False),
-    'use_security_lead': ('sale_stock', 'sales', 'Security Lead Time for Sales', 'native', False),
+    'use_security_lead': ('sale_stock', 'sales', 'Security Lead Time for Sales', 'effect', False),
     'security_lead': ('sale_stock', 'sales', 'Security Lead Time (days)', 'native', False),
     # ---- Purchase section
     'days_to_purchase': ('purchase_stock', 'purchase', 'Days to Purchase', 'native', False),
@@ -70,7 +70,7 @@ APP_SETTINGS = {
     'group_mrp_routings': ('mrp', 'business', 'Work Orders', 'effect', False),
     'group_mrp_workorder_dependencies': ('mrp', 'business', 'Work Order Dependencies', 'effect', False),
     'group_mrp_byproducts': ('mrp', 'business', 'By-Products', 'native', False),
-    'group_unlocked_by_default': ('mrp', 'business', 'Unlock Manufacturing Orders', 'native', False),
+    'group_unlocked_by_default': ('mrp', 'business', 'Unlock Manufacturing Orders', 'effect', False),
     'group_mrp_reception_report': ('mrp', 'business', 'Allocation Report for Manufacturing Orders', 'native', False),
     'group_project_stages': ('project', 'business', 'Project Stages', 'effect', False),
     'contract_expiration_notice_period': ('hr', 'business', 'Contract Expiry Notice Period (days)', 'native', False),
@@ -242,6 +242,12 @@ class NcBusinessSettings(models.TransientModel):
         row = APP_SETTINGS.get(name)
         if row and row[4] and not (self.env.su or self.env.user.has_group(TENANT_ADMIN)):
             raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))
+        others = self.env['res.company'].sudo().search_count([('id', 'not in', self.env.user.company_ids.ids)])
+        if name in TENANT_WIDE and not self.env.su and others:
+            # its effect reaches every company: never decided by someone who does not belong to all of them
+            raise AccessError(self.env._(
+                "%(setting)s applies to every company: only a user of all the companies can change it.",
+                setting=self.env['res.config.settings']._fields[name].string))
         result = super()._nc_check_value(name, value)
         string = self.env['res.config.settings']._fields[name].string
         if name in MAXIMUM and (value or 0) > MAXIMUM[name]:
@@ -283,11 +289,28 @@ class NcBusinessSettings(models.TransientModel):
         pricing = self.env['product.pricelist'].sudo().search([('id', '!=', False)]).filtered(
             lambda pl: pl.item_ids or pl.currency_id != (pl.company_id or company).currency_id)
         if pricing:
+            own = pricing.filtered(lambda pl: not pl.company_id or pl.company_id in self.env.user.company_ids)
             raise UserError(self.env._(
                 "Pricelists cannot be switched off while pricelists with price rules or another currency are active "
                 "(%(names)s). Archive them in Sales > Products > Pricelists first.",
-                names=', '.join(pricing[:5].mapped('display_name'))))
+                names=', '.join(own[:5].mapped('display_name')) or '...'))
         self._nc_apply_native(company, 'group_product_pricelist', value)
+        if 'pos.config' in self.env:
+            # point_of_sale: a shop never keeps using a feature that is switched off
+            self.env['pos.config'].sudo().search([('use_pricelist', '=', True)]).use_pricelist = False
+
+    def _nc_set_use_security_lead(self, company, value):
+        """sale_stock: switching the lead time off sets it to 0 for this company (Odoo's own page does this in an
+        onchange); otherwise deliveries would still be planned that many days early."""
+        self._nc_apply_native(company, 'use_security_lead', value)
+        if not value and company.security_lead:
+            company.write({'security_lead': 0.0})
+
+    def _nc_set_group_unlocked_by_default(self, company, value):
+        """mrp: open manufacturing orders follow the setting, as on Odoo's own page (its onchange)."""
+        self._nc_apply_native(company, 'group_unlocked_by_default', value)
+        self.env['mrp.production'].sudo().search([('state', 'not in', ('cancel', 'done')),
+                                                  ('is_locked', '=', bool(value))]).is_locked = not value
 
     def _nc_set_group_stock_multi_locations(self, company, value):
         """stock: the warehouses' internal operation type and the location screens follow Storage Locations, exactly
@@ -297,7 +320,8 @@ class NcBusinessSettings(models.TransientModel):
             raise AccessError(self.env._(
                 "Only an Inventory Manager can change the warehouse structure (storage locations)."))
         implied = self.env.ref('base.group_user').implied_ids
-        if not value and self.env.ref('stock.group_stock_multi_warehouses') in implied:
+        both = {self.env.ref('stock.group_stock_multi_warehouses'), self.env.ref('stock.group_stock_multi_locations')}
+        if not value and all(group in implied for group in both):
             raise UserError(self.env._(
                 "You can't deactivate the multi-location if you have more than once warehouse by company"))
         self._nc_apply_native(company, 'group_stock_multi_locations', value)
@@ -335,15 +359,17 @@ class NcBusinessSettings(models.TransientModel):
         """project: the "Project Stage Changed" message type is shown only while stages are in use."""
         self._nc_apply_native(company, 'group_project_stages', value)
         subtype = self.env.ref('project.mt_project_stage_change', raise_if_not_found=False)
+        subtype = subtype.sudo() if subtype else subtype
         if subtype and subtype.hidden == value:
-            subtype.sudo().hidden = not value
+            subtype.hidden = not value
 
     def _nc_set_group_mass_mailing_campaign(self, company, value):
         """mass_mailing: the A/B testing scheduler runs only while campaigns are in use."""
         self._nc_apply_native(company, 'group_mass_mailing_campaign', value)
         cron = self.env.ref('mass_mailing.ir_cron_mass_mailing_ab_testing', raise_if_not_found=False)
+        cron = cron.sudo() if cron else cron
         if cron and cron.active != value:
-            cron.sudo().active = value
+            cron.active = value
 
 
 # the company side of THIS table, kept next to it rather than merged into res_company_delegation.py
@@ -363,6 +389,15 @@ class ResCompany(models.Model):  # pylint: disable=consider-merging-classes-inhe
 
     def _nc_check_delegated_values(self, vals):
         result = super()._nc_check_delegated_values(vals)
+        for name, field in COMPANY_FIELDS.items():
+            if field not in vals:
+                continue
+            value = vals[field]
+            if name in MAXIMUM and isinstance(value, (int, float)) and not 0 <= value <= MAXIMUM[name]:
+                raise ValidationError(self.env._("%(setting)s must be between 0 and %(maximum)s.",
+                                                 setting=APP_SETTINGS[name][2], maximum=MAXIMUM[name]))
+            if isinstance(value, str) and len(value) > MAX_TEXT:
+                raise ValidationError(self.env._("%(setting)s is too long.", setting=APP_SETTINGS[name][2]))
         if set(vals) & ADMIN_ONLY_COMPANY_FIELDS and not self.env.user.has_group(TENANT_ADMIN):
             # accounting controls: never a section delegate, also on a direct company write
             raise AccessError(self.env._("Only a workspace administrator can change the accounting settings."))

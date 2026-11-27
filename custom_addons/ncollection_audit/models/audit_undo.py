@@ -267,6 +267,8 @@ class AuditUndo(models.Model):
             existing = self.env[field.comodel_name].sudo().with_context(active_test=False).browse(value).exists()
             if len(existing) != len(value):
                 return False, self.env._("Some linked records no longer exist.")
+            if not self.env[field.comodel_name].browse(existing.ids).has_access('read'):
+                return False, self.env._("You cannot access the linked record.")
         return True, None
 
     @api.model

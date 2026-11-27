@@ -145,12 +145,23 @@ class AuditRestore(models.Model):
             related.append(env._("Amounts and taxes are recomputed by the document from the restored lines; they "
                                  "are never written from the trail."))
             if any(r['restorable'] and r['field'] == '%s:%s:partner_id' % (model, res_id) for r in rows):
-                related.append(env._("Restoring the customer or supplier recomputes the fiscal position, and with "
-                                     "it the taxes of the lines."))
+                related.append(env._("Restoring the customer or supplier recomputes the fiscal position; the "
+                                     "taxes of the lines are kept as shown here."))
         return {'available': True, 'kind': 'version', 'modes': ['version'], 'rows': rows, 'writes': writes,
                 'removals': removals, 'reason': '', 'hint': '', 'related': related, 'version': index + 1,
                 'effect': env._("The document returns to version %(version)s for every field and line listed as "
                                 "restorable. Everything else stays as it is.", version=index + 1)}
+
+    @api.model
+    def _nc_taxes_to_keep(self, model, res_id, writes):
+        """[(line, its current taxes)] for the invoice lines whose taxes this restore does not write, when the
+        restore writes the partner or the fiscal position of an invoice (both remap line taxes in Odoo)."""
+        header = writes.get((model, res_id)) or {}
+        if model != 'account.move' or not ({'partner_id', 'fiscal_position_id'} & set(header)):
+            return []
+        move = self.env[model].browse(res_id)
+        return [(line, line.tax_ids) for line in move.invoice_line_ids
+                if 'tax_ids' not in (writes.get(('account.move.line', line.id)) or {})]
 
     @api.model
     def _nc_line_name(self, line):
@@ -187,6 +198,9 @@ class AuditRestore(models.Model):
         if (model not in env or model in PROTECTED or model.startswith(PROTECTED_PREFIX)
                 or env[model]._abstract or not env[model]._auto):
             raise UserError(env._("Restoring a version is not available for this document type."))
+        document = env[model].browse(res_id)
+        if not document.exists() or not document.has_access('write'):
+            raise UserError(env._("This version cannot be restored."))   # checked BEFORE any row is locked
         if model in env:
             try:
                 with mute_logger('odoo.sql_db'):
@@ -222,9 +236,16 @@ class AuditRestore(models.Model):
         with undo_scope(undo.id):
             # the document itself first, then its lines (the lines follow the restored header)
             ordered = sorted(analysis['writes'].items(), key=lambda item: item[0][0] != model)
+            kept_taxes = self._nc_taxes_to_keep(model, res_id, analysis['writes'])
             for (key_model, key_id), vals in ordered:
                 target = env[key_model].browse(key_id)
                 target.write(_with_kept_values(target, vals))
+                if key_model == model and kept_taxes:
+                    # a restored partner / fiscal position makes Odoo remap the taxes of EVERY line; the lines
+                    # whose taxes are not part of this restore keep exactly the taxes the preview showed
+                    for line, taxes in kept_taxes:
+                        if line.exists() and line.tax_ids != taxes:
+                            line.write({'tax_ids': [(6, 0, taxes.ids)]})
             for key_model, key_id in analysis['removals']:
                 env[key_model].browse(key_id).unlink()
         undo.sudo().write({'state': 'done', 'mode': 'version', 'result_res_id': res_id,

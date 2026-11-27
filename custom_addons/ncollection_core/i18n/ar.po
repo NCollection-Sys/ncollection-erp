@@ -4144,43 +4144,55 @@ msgid "e.g. 10.0.0.1, 10.0.0.2"
 msgstr "مثال: 10.0.0.1، 10.0.0.2"
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "%(setting)s cannot be more than %(maximum)s."
 msgstr "لا يمكن أن يتجاوز %(setting)s القيمة %(maximum)s."
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "%(setting)s is too long."
 msgstr "%(setting)s طويل جدًا."
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "Pricelists cannot be switched off while pricelists with price rules or another currency are active (%(names)s). Archive them in Sales > Products > Pricelists first."
 msgstr "لا يمكن إيقاف قوائم الأسعار ما دامت هناك قوائم أسعار نشطة تحتوي على قواعد تسعير أو بعملة أخرى (%(names)s). أرشفها أولًا من المبيعات > المنتجات > قوائم الأسعار."
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "Only an Inventory Manager can change the warehouse structure (storage locations)."
 msgstr "يمكن لمدير المخزون فقط تغيير هيكل المستودع (مواقع التخزين)."
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "You can't deactivate the multi-location if you have more than once warehouse by company"
 msgstr "لا يمكنك إيقاف تعدد المواقع إذا كان لديك أكثر من مستودع لكل شركة"
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "Work Orders cannot be switched off while bills of materials have operations. Remove or archive the operations first."
 msgstr "لا يمكن إيقاف أوامر العمل ما دامت قوائم المواد تحتوي على عمليات. احذف العمليات أو أرشفها أولًا."
 
 #. module: ncollection_core
+#. odoo-python
 #: code:addons/ncollection_core/wizards/app_settings.py:0
-#, python-format
 msgid "Work Order Dependencies cannot be switched off while bills of materials use them. Turn them off on those bills of materials first."
 msgstr "لا يمكن إيقاف تبعيات أوامر العمل ما دامت قوائم المواد تستخدمها. أوقفها في قوائم المواد تلك أولًا."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+msgid "%(setting)s applies to every company: only a user of all the companies can change it."
+msgstr "%(setting)s يسري على جميع الشركات: لا يمكن تغييره إلا لمستخدم ينتمي إلى جميع الشركات."
+
+#. module: ncollection_core
+#. odoo-python
+#: code:addons/ncollection_core/wizards/app_settings.py:0
+msgid "%(setting)s must be between 0 and %(maximum)s."
+msgstr "يجب أن تكون قيمة %(setting)s بين 0 و%(maximum)s."

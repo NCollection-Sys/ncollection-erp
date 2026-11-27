@@ -5,7 +5,7 @@ set_values), the section level and the administrator rule enforced on save, and 
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, new_test_user, tagged
 
-from ..wizards.app_settings import APP_SETTINGS, MAXIMUM, TENANT_WIDE, _TYPES
+from ..wizards.app_settings import APP_SETTINGS, COMPANY_FIELDS, MAXIMUM, TENANT_WIDE, _TYPES
 
 
 @tagged('post_install', '-at_install')
@@ -24,6 +24,8 @@ class TestAppSettings(TransactionCase):
         cls.employee = new_test_user(cls.env, login='as_employee', groups='base.group_user', **common)
         cls.native = cls.env['res.config.settings']._fields
         cls.Page = cls.env['ncollection.business.settings']
+        # tenant-wide settings need a user of EVERY company (the Owner of a multi-company tenant is)
+        cls.owner.write({'company_ids': [(6, 0, cls.env['res.company'].search([]).ids)]})
 
     def _settings(self, user, **vals):
         return self.Page.with_user(user).create(vals)
@@ -150,3 +152,103 @@ class TestAppSettings(TransactionCase):
                 continue
             with self.assertRaises(AccessError):
                 self.env.company.with_user(self.delegate).write({field: not self.env.company[field]})
+
+    # ---------------------------------------------------------------- the side effect of each setting
+    def _toggle(self, name, value):
+        self._settings(self.owner, **{name: value}).action_nc_save()
+
+    def test_a_single_company_user_cannot_change_a_tenant_wide_setting(self):
+        name = next((n for n in TENANT_WIDE if n in self.native and _TYPES[n] == 'boolean'
+                     and APP_SETTINGS[n][1] == 'business' and not APP_SETTINGS[n][4]), None)
+        if not name:
+            return
+        self.env['res.company'].create({'name': 'App settings second company'})
+        current = self._settings(self.delegate)[name]
+        with self.assertRaises(AccessError):
+            self._settings(self.delegate, **{name: not current}).action_nc_save()
+
+    def test_switching_the_security_lead_time_off_sets_it_to_zero(self):
+        if 'use_security_lead' not in self.native:
+            return
+        self._toggle('use_security_lead', True)
+        self.env.company.security_lead = 3
+        self._toggle('use_security_lead', False)
+        self.assertEqual(self.env.company.security_lead, 0)
+
+    def test_leads_follow_on_every_team_that_uses_opportunities(self):
+        if 'group_use_lead' not in self.native:
+            return
+        team = self.env['crm.team'].create({'name': 'App settings team', 'use_opportunities': True})
+        start = self._settings(self.owner).group_use_lead
+        self._toggle('group_use_lead', not start)
+        self.assertEqual(team.use_leads, not start)
+        self._toggle('group_use_lead', start)
+        self.assertEqual(team.use_leads, start)
+
+    def test_quotation_templates_off_clears_the_default_template(self):
+        if 'group_sale_order_template' not in self.native:
+            return
+        self._toggle('group_sale_order_template', True)
+        template = self.env['sale.order.template'].create({'name': 'App settings template'})
+        self.env.company.sale_order_template_id = template
+        self._toggle('group_sale_order_template', False)
+        self.assertFalse(self.env.company.sale_order_template_id)
+        self.assertTrue(template.exists())
+
+    def test_storage_locations_need_an_inventory_manager(self):
+        if 'group_stock_multi_locations' not in self.native:
+            return
+        current = self._settings(self.owner).group_stock_multi_locations
+        if self.owner.has_group('stock.group_stock_manager'):
+            return
+        with self.assertRaises(AccessError):
+            self._toggle('group_stock_multi_locations', not current)
+
+    def test_work_orders_stay_on_while_operations_exist(self):
+        if 'group_mrp_routings' not in self.native:
+            return
+        self._toggle('group_mrp_routings', True)
+        product = self.env['product.product'].create({'name': 'App settings product'})
+        center = self.env['mrp.workcenter'].create({'name': 'App settings center'})
+        bom = self.env['mrp.bom'].create({'product_tmpl_id': product.product_tmpl_id.id, 'operation_ids': [
+            (0, 0, {'name': 'Cut', 'workcenter_id': center.id})]})
+        with self.assertRaises(UserError):
+            self._toggle('group_mrp_routings', False)
+        self.assertTrue(bom.operation_ids.active)
+
+    def test_unlocking_by_default_unlocks_open_manufacturing_orders(self):
+        if 'group_unlocked_by_default' not in self.native:
+            return
+        product = self.env['product.product'].create({'name': 'App settings made', 'is_storable': True})
+        self._toggle('group_unlocked_by_default', False)
+        order = self.env['mrp.production'].create({'product_id': product.id, 'product_qty': 1})
+        order.is_locked = True
+        self._toggle('group_unlocked_by_default', True)
+        self.assertFalse(order.is_locked)
+
+    def test_project_stages_show_the_stage_change_message_type(self):
+        if 'group_project_stages' not in self.native:
+            return
+        subtype = self.env.ref('project.mt_project_stage_change')
+        start = self._settings(self.owner).group_project_stages
+        self._toggle('group_project_stages', not start)
+        self.assertEqual(subtype.hidden, start)
+        self._toggle('group_project_stages', start)
+        self.assertEqual(subtype.hidden, not start)
+
+    def test_mailing_campaigns_drive_the_ab_testing_scheduler(self):
+        if 'group_mass_mailing_campaign' not in self.native:
+            return
+        cron = self.env.ref('mass_mailing.ir_cron_mass_mailing_ab_testing')
+        start = self._settings(self.owner).group_mass_mailing_campaign
+        self._toggle('group_mass_mailing_campaign', not start)
+        self.assertEqual(cron.active, not start)
+        self._toggle('group_mass_mailing_campaign', start)
+
+    def test_a_direct_company_write_is_bounded_too(self):
+        for name, maximum in MAXIMUM.items():
+            field = COMPANY_FIELDS.get(name)
+            if not field or field not in self.env['res.company']._fields:
+                continue
+            with self.assertRaises(ValidationError):
+                self.env.company.with_user(self.owner).write({field: maximum + 1})

@@ -9,7 +9,7 @@
  *
  * Nothing is stored: reopening the screen shows the defaults again (newest first, no filters).
  */
-import { Component, onWillStart, useExternalListener, useState } from "@odoo/owl";
+import { Component, onMounted, onWillStart, onWillUnmount, useExternalListener, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
@@ -31,6 +31,15 @@ export class NcAuditCenter extends Component {
     setup() {
         this.orm = useService("orm");
         useExternalListener(window, "resize", () => this.fitFrames());
+        // the page's width also changes without a window resize (the application sidebar folds / unfolds)
+        onMounted(() => {
+            const area = document.querySelector(".o_action_manager");
+            if (area && window.ResizeObserver) {
+                this.areaObserver = new ResizeObserver(() => this.fitFrames());
+                this.areaObserver.observe(area);
+            }
+        });
+        onWillUnmount(() => this.areaObserver?.disconnect());
         this.action = useService("action");
         this.dialog = useService("dialog");
         this.notification = useService("notification");
@@ -46,8 +55,6 @@ export class NcAuditCenter extends Component {
             undo: null, undoSelected: {}, undoBusy: false, undoDone: null, error: "",
             doc: null, docLoading: false, docMode: "document", printable: null, vcmp: null, vcmpLoading: false,
             restore: null, restoreBusy: false, restoreDone: null, pickFirst: null,
-            doc: null, docLoading: false, docMode: "document", printable: null, vcmp: null, vcmpLoading: false,
-            restore: null, restoreBusy: false, restoreDone: null,
         });
         onWillStart(async () => {
             this.state.options = await this.orm.call("ncollection.audit.service", "nc_audit_options", []);

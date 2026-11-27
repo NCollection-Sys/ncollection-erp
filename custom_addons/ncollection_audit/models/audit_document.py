@@ -28,6 +28,7 @@ from lxml import etree, html as lxml_html
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
+from odoo.http import request
 from odoo.tools import SQL
 from odoo.tools.misc import file_open
 
@@ -228,15 +229,23 @@ class AuditDocument(models.AbstractModel):
                         limits.append(self.env._("A line added after this version could not be taken out of the "
                                                  "document; it is shown."))
         if amounts and record._name == 'account.move':
-            sign = -1 if record.sudo().move_type in ('out_refund', 'in_invoice', 'in_receipt') else 1
+            move = record.sudo()
+            sign = -1 if move.move_type in ('out_refund', 'in_invoice', 'in_receipt') else 1
+
+            def signed(amount):
+                # the *_signed amounts are in the COMPANY currency: converted at the document's own date
+                if move.currency_id == move.company_id.currency_id:
+                    return sign * amount
+                return sign * move.currency_id._convert(amount, move.company_id.currency_id, move.company_id,
+                                                        move.invoice_date or move.date or fields.Date.today())
             cr.execute(SQL(
                 "UPDATE account_move SET amount_untaxed = %s, amount_tax = %s, amount_total = %s, "
                 "amount_untaxed_signed = %s, amount_tax_signed = %s, amount_total_signed = %s WHERE id = %s",
                 amounts.get('amount_untaxed', record.amount_untaxed), amounts.get('amount_tax', record.amount_tax),
                 amounts.get('amount_total', record.amount_total),
-                sign * amounts.get('amount_untaxed', record.amount_untaxed),
-                sign * amounts.get('amount_tax', record.amount_tax),
-                sign * amounts.get('amount_total', record.amount_total), record.id))
+                signed(amounts.get('amount_untaxed', record.amount_untaxed)),
+                signed(amounts.get('amount_tax', record.amount_tax)),
+                signed(amounts.get('amount_total', record.amount_total)), record.id))
 
     @api.model
     def _nc_render(self, report, record, overlay=None):
@@ -328,7 +337,9 @@ class AuditDocument(models.AbstractModel):
     def _nc_page(self, content):
         """A self-contained page for the screen's sandboxed frame: the report's own styles (absolute URLs), the
         highlight styles, never a script."""
-        base = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
+        # the host the user is on (platform subdomain or verified custom domain), so the styles load from there
+        base = request.httprequest.host_url if request else ''
+        base = base or self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
         content = re.sub(r'<script\b[^>]*>.*?</script>', '', content, flags=re.S | re.I)
         head = '<base href="%s/" target="_blank">%s' % (escape(base.rstrip('/')), HIGHLIGHT_CSS)
         if '<head>' in content:
@@ -440,6 +451,7 @@ class AuditDocument(models.AbstractModel):
         if not isinstance(model, str) or not all(
                 isinstance(x, int) and not isinstance(x, bool) for x in (res_id, log_a, log_b)):
             raise UserError(self.env._("Malformed request."))
+        self.env['ncollection.audit.service']._nc_check_reader()     # before anything is said about the record
         record, report, reason = self._nc_document_for(model, res_id)
         if record is None:
             return {'printable': False, 'reason': reason}
