@@ -214,3 +214,19 @@ Timestamps, users, values and digests are untouched. The new indexes are (create
   added.
 - A removed line is never re-added.
 - A posted, paid, reconciled or locked invoice is refused, with a pointer to the credit-note workflow.
+
+## 7. Release review of the printable versions (2026-11-27)
+
+Fixed before release: a document's own History now compares PRINTED versions (it showed only the field
+table); a restored partner / fiscal position keeps the taxes of the lines exactly as the preview showed them;
+a foreign-currency preview shows company-currency signed totals; frame styles load from the host the user is
+on; the reader is checked before anything is said about a record; write access is checked before a row is
+locked; many2many restore targets need read access; frames rescale when the application sidebar folds.
+
+Known limitations (documented, not changed):
+- A version preview lays the historical values over the document inside a savepoint that is always rolled
+  back. While it renders (seconds at most; `lock_timeout` 1.5 s for the reader) the rows it overlays are
+  locked, so a concurrent edit of that document waits. Nothing is written or leaked.
+- Restoring an older date is not refused by the lock-date check (it checks the document's current dates); the
+  draft is re-checked by Odoo when it is posted. A draft's sequence name can be restored (Odoo's uniqueness
+  constraint still applies).

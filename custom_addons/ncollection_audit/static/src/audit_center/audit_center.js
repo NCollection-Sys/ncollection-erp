@@ -339,6 +339,9 @@ export class NcAuditCenter extends Component {
         this.state.history = await this.orm.call("ncollection.audit.service", "nc_audit_history", [model, resId]);
         this.state.view = "history";
         this.state.compare = null;
+        // the document's own history compares printed versions too (not only from an event's tabs)
+        this.state.vcmp = null;
+        this.state.printable = await this.orm.call("ncollection.audit.document", "nc_audit_printable", [model, resId]);
         this.defaultCompare();
     }
     defaultCompare() {
