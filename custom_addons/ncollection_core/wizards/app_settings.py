@@ -373,8 +373,8 @@ class NcBusinessSettings(models.TransientModel):
 
 
 # the company side of THIS table, kept next to it rather than merged into res_company_delegation.py
-class ResCompany(models.Model):  # pylint: disable=consider-merging-classes-inherited
-    _inherit = 'res.company'
+class ResCompany(models.Model):
+    _inherit = 'res.company'  # pylint: disable=consider-merging-classes-inherited
 
     @api.model
     def _nc_tenant_admin_company_fields(self):
