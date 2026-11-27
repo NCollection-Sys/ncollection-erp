@@ -240,12 +240,11 @@ class AuditRestore(models.Model):
             for (key_model, key_id), vals in ordered:
                 target = env[key_model].browse(key_id)
                 target.write(_with_kept_values(target, vals))
-                if key_model == model and kept_taxes:
-                    # a restored partner / fiscal position makes Odoo remap the taxes of EVERY line; the lines
-                    # whose taxes are not part of this restore keep exactly the taxes the preview showed
-                    for line, taxes in kept_taxes:
-                        if line.exists() and line.tax_ids != taxes:
-                            line.write({'tax_ids': [(6, 0, taxes.ids)]})
+            # a restored partner / fiscal position (or a restored product on a line) makes Odoo recompute line taxes;
+            # after EVERY write, the lines whose taxes are not part of this restore keep the taxes the preview showed
+            for line, taxes in kept_taxes:
+                if line.exists() and line.tax_ids != taxes:
+                    line.write({'tax_ids': [(6, 0, taxes.ids)]})
             for key_model, key_id in analysis['removals']:
                 env[key_model].browse(key_id).unlink()
         undo.sudo().write({'state': 'done', 'mode': 'version', 'result_res_id': res_id,

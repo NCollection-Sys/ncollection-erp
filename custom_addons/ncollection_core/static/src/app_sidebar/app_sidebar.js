@@ -72,10 +72,11 @@ export class NcAppSidebar extends Component {
         });
         // the tap that closes the overlay only closes it: it never also activates what lay under the shadow
         useExternalListener(window, "pointerdown", (ev) => {
+            this.swallowClick = false;               // a press that produced no click never eats a later one
             if (this.overlaid && this.root.el && !this.root.el.contains(ev.target)) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                this.swallowClick = true;
+                this.swallowClick = ev.button === 0;
                 this.close();
             }
         }, { capture: true });
@@ -86,6 +87,11 @@ export class NcAppSidebar extends Component {
                 ev.stopPropagation();
             }
         }, { capture: true });
+        for (const type of ["pointercancel", "contextmenu"]) {
+            useExternalListener(window, type, () => {
+                this.swallowClick = false;
+            }, { capture: true });
+        }
         // keyboard: focus leaving the open overlay (Tab) closes it, so nothing covered can be operated unseen
         useExternalListener(window, "focusin", (ev) => {
             if (this.overlaid && this.root.el && !this.root.el.contains(ev.target)) {

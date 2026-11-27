@@ -234,10 +234,11 @@ class AuditDocument(models.AbstractModel):
 
             def signed(amount):
                 # the *_signed amounts are in the COMPANY currency: converted at the document's own date
-                if move.currency_id == move.company_id.currency_id:
+                # at the rate the document itself books (Odoo stores the signed amounts from the line balances)
+                rate = move.invoice_currency_rate if 'invoice_currency_rate' in move._fields else 0
+                if move.currency_id == move.company_id.currency_id or not rate:
                     return sign * amount
-                return sign * move.currency_id._convert(amount, move.company_id.currency_id, move.company_id,
-                                                        move.invoice_date or move.date or fields.Date.today())
+                return sign * move.company_id.currency_id.round(amount / rate)
             cr.execute(SQL(
                 "UPDATE account_move SET amount_untaxed = %s, amount_tax = %s, amount_total = %s, "
                 "amount_untaxed_signed = %s, amount_tax_signed = %s, amount_total_signed = %s WHERE id = %s",
